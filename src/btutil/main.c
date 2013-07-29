@@ -187,11 +187,11 @@ struct fcnStruct fcn[] = {
  *==============================*/
 
 int setPropertySlow(int bus, int id, int property, int verify, long value){
-   long ret;
+   //long ret;
 
    setProperty(bus, id, property, verify, value);
-   //usleep(SET_SLEEP);
-   getProperty(bus, id, 4, &ret);
+   usleep(SET_SLEEP);
+   //getProperty(bus, id, 4, &ret);
    
 }
 
