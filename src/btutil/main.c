@@ -1890,6 +1890,90 @@ void strainHand(void){
 
 }
 
+double sumX, sumX2, max, min, mean, stdev = 0;
+	long value, cycles;
+
+	wakePuck(0, id);
+	printf("\nPress Ctrl-C to exit...\n");
+	setPropertySlow(0, id, ADDR, 0, 0x7108); // ADCRESULT0
+	setPropertySlow(0, id, TSTOP, 0, 0);
+	setPropertySlow(0, id, MODE, 0, 2);
+	
+	sumX = sumX2 = 0;
+	max = -2E9;
+	min = +2E9;
+	cycles = 0;
+	while(1){
+		++cycles;
+		getProperty(0, id, VALUE, &value);
+		value >>= 4;
+		value &= 0x00000FFF;
+		
+		if(value > max) max = value;
+		if(value < min) min = value;
+		sumX += value;
+		sumX2 += value * value;
+		
+		mean = 1.0 * sumX / cycles;
+		if(cycles > 1)
+			stdev = sqrt((1.0 * cycles * sumX2 - sumX * sumX) / (cycles * cycles - cycles));
+			
+		printf("\rSample = %ld, Value = %ld, Min = %4.0lf, Max = %4.0lf, Mean = %6.2lf, Stdev = %4.2lf\t\t", cycles, value, min, max, mean, stdev);
+		usleep(50000);
+	}
+	
+void debugNoise(int argc, char **argv){
+	int watchFinger; // Collect data on this finger
+	int moving; // Any moving finger
+	long value; // Returned value
+	long mode;
+	long cycles;
+	
+	double sumX, sumX2, max, min, mean, stdev = 0;
+	
+	if(argc != 5){
+		printf("\nUsage example: ./btutil -w 123 c 3\n");
+		exit(0);
+	}
+	
+	watchFinger = atol(argv[4]) + 10;
+	
+	// Initialize? 
+	
+	for(i = 1; i <= 4; i++){
+		if(strchr(argv[2], '0'+i)){ // Move Finger
+			moving = i;
+			if(toupper(argv[3][0]) == 'C') // Close
+				setProperty(0, i+10, 29, 18);
+			else
+				setProperty(0, i+10, 29, 20);
+		}
+	}
+	setProperty(0, watchFinger, 6, FALSE, 0x08598); // pid.pe
+	
+	sumX = sumX2 = 0;
+	max = -2E9;
+	min = +2E9;
+	cycles = 0;
+	do{
+		++cycles;
+		getProperty(0, watchFinger, 7, &value); // Get VALUE
+		getProperty(0, moving+10, 8, &mode); // Get MODE
+		
+		if(value > max) max = value;
+		if(value < min) min = value;
+		sumX += value;
+		sumX2 += value * value;
+		
+	}while(mode == 5);
+	
+	mean = 1.0 * sumX / cycles;
+	stdev = sqrt((1.0 * cycles * sumX2 - sumX * sumX) / (cycles * cycles - cycles));
+	
+	printf("\nResults: Min = %4.0lf, Max = %4.0lf, Mean = %6.2lf, Stdev = %4.2lf\n", min, max, mean, stdev);
+		
+}
+
 void handleMenu(int argc, char **argv)
 {
    long        status[MAX_NODES];
@@ -1913,10 +1997,7 @@ void handleMenu(int argc, char **argv)
 
    switch(*c) {
    case 'W':
-   printf("\n\nGet PPS data: \n");
-   vers = 999;
-   getProperty(0, 1, 34, &vers);
-   printf("\nResponse = [0x%04x]\n", vers);
+   	   debugNoise(argv);
    break;
    case 'H':
       printf("\n\nCheck hall feedback on motor: ");
