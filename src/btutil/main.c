@@ -1892,14 +1892,14 @@ void strainHand(void){
 
 
 	
-void debugNoise(int argc, char **argv){
+void debugNoise(int argc, char **argv, char c){
 	int watchFinger; // Collect data on this finger
 	int moving; // Any moving finger
 	long value; // Returned value
 	long mode;
 	long cycles;
 	int i;
-	long *array;
+	long *error, *cmd;
 	FILE *out;
 	
 	double sumX, sumX2, max, min, mean, stdev = 0;
@@ -1909,10 +1909,17 @@ void debugNoise(int argc, char **argv){
 		exit(0);
 	}
 	
-	if((array=malloc(5000*sizeof(long))) == NULL){
+	if((error=malloc(5000*sizeof(long))) == NULL){
 		printf("\nFailed to allocate array!\n");
 		exit(1);
 	}
+	if(c == 'X'){
+		if((cmd=malloc(5000*sizeof(long))) == NULL){
+			printf("\nFailed to allocate array!\n");
+			exit(1);
+		}
+	}
+	
 	watchFinger = atol(argv[4]) + 10;
 	
 	// Initialize? 
@@ -1926,7 +1933,8 @@ void debugNoise(int argc, char **argv){
 				setProperty(0, i+10, 29, FALSE, 20);
 		}
 	}
-	setProperty(0, watchFinger, 6, FALSE, 0x08598); // pid.pe
+	if(c == 'W')
+		setProperty(0, watchFinger, 6, FALSE, 0x08598); // pid.pe
 	
 	sumX = sumX2 = 0;
 	max = -2E9;
@@ -1934,6 +1942,14 @@ void debugNoise(int argc, char **argv){
 	cycles = 0;
 	do{
 		++cycles;
+		if(c == 'X'){
+			setProperty(0, watchFinger, 6, FALSE, 0x085A4); // motor.cmdPos (low)
+			getProperty(0, watchFinger, 7, &cmd[cycles]); // Get VALUE
+			setProperty(0, watchFinger, 6, FALSE, 0x085A5); // motor.cmdPos (high)
+			getProperty(0, watchFinger, 7, &value); // Get VALUE
+			cmd[cycles] = (value << 16) | cmd[cycles];
+			setProperty(0, watchFinger, 6, FALSE, 0x08598); // pid.pe
+		}
 		getProperty(0, watchFinger, 7, &value); // Get VALUE
 		getProperty(0, moving+10, 8, &mode); // Get MODE
 		
@@ -1942,7 +1958,7 @@ void debugNoise(int argc, char **argv){
 		sumX += value;
 		sumX2 += value * value;
 		
-		array[cycles] = value;
+		error[cycles] = value;
 	}while(mode == 5);
 	
 	mean = 1.0 * sumX / cycles;
@@ -1951,12 +1967,19 @@ void debugNoise(int argc, char **argv){
 	printf("\nResults: Samples = %ld, Min = %4.0lf, Max = %4.0lf, Mean = %6.2lf, Stdev = %4.2lf\n", cycles, min, max, mean, stdev);
 	
 	if((out = fopen("positionError.dat", "w")) != NULL){
+		if(c == 'X')
+			fprintf(out, "motor.cmdPos, ");
+		fprintf(out, "pid.err\n");
 		for(i = 1; i <= cycles; i++){
-			fprintf(out, "%ld\n", array[i]);
+			if(c == 'X')
+				fprintf(out, "%ld, ", cmd[i]);
+			fprintf(out, "%ld\n", error[i]);
 		}
 		fclose(out);
 	}
-	free(array);
+	if(c == 'X')
+		free(cmd);
+	free(error);
 		
 }
 
@@ -1983,7 +2006,8 @@ void handleMenu(int argc, char **argv)
 
    switch(*c) {
    case 'W':
-   	   debugNoise(argc, argv);
+   case 'X':
+   	   debugNoise(argc, argv, *c);
    break;
    case 'H':
       printf("\n\nCheck hall feedback on motor: ");
