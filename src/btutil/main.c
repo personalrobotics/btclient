@@ -1504,12 +1504,12 @@ void cycleHand(void){
 	printf("\n\nPlease wait, hand is now initializing...\n\n");
 
     setPropertySlow(0,11,CMD,0,CMD_HI);
-    usleep(2e6);
+    //usleep(2e6);
 #if 1
     setPropertySlow(0,12,CMD,0,CMD_HI);
-    usleep(2e6);
+    //usleep(2e6);
     setPropertySlow(0,13,CMD,0,CMD_HI);
-    usleep(2e6);
+    //usleep(2e6);
     setPropertySlow(0,14,CMD,0,CMD_HI);
     usleep(2e6);
 #endif
@@ -1890,37 +1890,7 @@ void strainHand(void){
 
 }
 
-double sumX, sumX2, max, min, mean, stdev = 0;
-	long value, cycles;
 
-	wakePuck(0, id);
-	printf("\nPress Ctrl-C to exit...\n");
-	setPropertySlow(0, id, ADDR, 0, 0x7108); // ADCRESULT0
-	setPropertySlow(0, id, TSTOP, 0, 0);
-	setPropertySlow(0, id, MODE, 0, 2);
-	
-	sumX = sumX2 = 0;
-	max = -2E9;
-	min = +2E9;
-	cycles = 0;
-	while(1){
-		++cycles;
-		getProperty(0, id, VALUE, &value);
-		value >>= 4;
-		value &= 0x00000FFF;
-		
-		if(value > max) max = value;
-		if(value < min) min = value;
-		sumX += value;
-		sumX2 += value * value;
-		
-		mean = 1.0 * sumX / cycles;
-		if(cycles > 1)
-			stdev = sqrt((1.0 * cycles * sumX2 - sumX * sumX) / (cycles * cycles - cycles));
-			
-		printf("\rSample = %ld, Value = %ld, Min = %4.0lf, Max = %4.0lf, Mean = %6.2lf, Stdev = %4.2lf\t\t", cycles, value, min, max, mean, stdev);
-		usleep(50000);
-	}
 	
 void debugNoise(int argc, char **argv){
 	int watchFinger; // Collect data on this finger
@@ -1928,6 +1898,9 @@ void debugNoise(int argc, char **argv){
 	long value; // Returned value
 	long mode;
 	long cycles;
+	int i;
+	long *array;
+	FILE *out;
 	
 	double sumX, sumX2, max, min, mean, stdev = 0;
 	
@@ -1936,6 +1909,10 @@ void debugNoise(int argc, char **argv){
 		exit(0);
 	}
 	
+	if((array=malloc(5000*sizeof(long))) == NULL){
+		printf("\nFailed to allocate array!\n");
+		exit(1);
+	}
 	watchFinger = atol(argv[4]) + 10;
 	
 	// Initialize? 
@@ -1944,9 +1921,9 @@ void debugNoise(int argc, char **argv){
 		if(strchr(argv[2], '0'+i)){ // Move Finger
 			moving = i;
 			if(toupper(argv[3][0]) == 'C') // Close
-				setProperty(0, i+10, 29, 18);
+				setProperty(0, i+10, 29, FALSE, 18);
 			else
-				setProperty(0, i+10, 29, 20);
+				setProperty(0, i+10, 29, FALSE, 20);
 		}
 	}
 	setProperty(0, watchFinger, 6, FALSE, 0x08598); // pid.pe
@@ -1965,12 +1942,21 @@ void debugNoise(int argc, char **argv){
 		sumX += value;
 		sumX2 += value * value;
 		
+		array[cycles] = value;
 	}while(mode == 5);
 	
 	mean = 1.0 * sumX / cycles;
 	stdev = sqrt((1.0 * cycles * sumX2 - sumX * sumX) / (cycles * cycles - cycles));
 	
-	printf("\nResults: Min = %4.0lf, Max = %4.0lf, Mean = %6.2lf, Stdev = %4.2lf\n", min, max, mean, stdev);
+	printf("\nResults: Samples = %ld, Min = %4.0lf, Max = %4.0lf, Mean = %6.2lf, Stdev = %4.2lf\n", cycles, min, max, mean, stdev);
+	
+	if((out = fopen("positionError.dat", "w")) != NULL){
+		for(i = 1; i <= cycles; i++){
+			fprintf(out, "%ld\n", array[i]);
+		}
+		fclose(out);
+	}
+	free(array);
 		
 }
 
@@ -1997,7 +1983,7 @@ void handleMenu(int argc, char **argv)
 
    switch(*c) {
    case 'W':
-   	   debugNoise(argv);
+   	   debugNoise(argc, argv);
    break;
    case 'H':
       printf("\n\nCheck hall feedback on motor: ");
