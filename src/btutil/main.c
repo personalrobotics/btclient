@@ -1941,7 +1941,7 @@ void debugNoise(int argc, char **argv, char c){
 			}
 		}
 	}
-	if(c == 'W')
+	if(c == 'W' | c == 'Y')
 		setProperty(0, watchFinger, 6, FALSE, 0x08598); // pid.pe
 	
 	sumX = sumX2 = 0;
