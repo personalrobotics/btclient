@@ -1906,6 +1906,9 @@ void debugNoise(int argc, char **argv, char c){
 	
 	if(argc != 5){
 		printf("\nUsage example: ./btutil -w 123 c 3\n");
+		printf("-w: move each finger specified, record pid.err\n");
+		printf("-x: move each finger specified, record motor.cmdPos and pid.err\n");
+		printf("-y: activate each finger specified, move and record pid.err on one finger\n");
 		exit(0);
 	}
 	
@@ -1926,11 +1929,16 @@ void debugNoise(int argc, char **argv, char c){
 	
 	for(i = 1; i <= 4; i++){
 		if(strchr(argv[2], '0'+i)){ // Move Finger
-			moving = i;
-			if(toupper(argv[3][0]) == 'C') // Close
-				setProperty(0, i+10, 29, FALSE, 18);
-			else
-				setProperty(0, i+10, 29, FALSE, 20);
+			if( c == 'Y' && i != atol(argv[4]) ){ // Activate but don't move non-watched fingers
+				setProperty(0, i+10, 78, FALSE, 0);
+				setProperty(0, i+10, 8, FALSE, 2);
+			}else{
+				moving = i;
+				if(toupper(argv[3][0]) == 'C') // Close
+					setProperty(0, i+10, 29, FALSE, 18);
+				else
+					setProperty(0, i+10, 29, FALSE, 20);
+			}
 		}
 	}
 	if(c == 'W')
@@ -1947,7 +1955,7 @@ void debugNoise(int argc, char **argv, char c){
 			getProperty(0, watchFinger, 7, &cmd[cycles]); // Get VALUE
 			setProperty(0, watchFinger, 6, FALSE, 0x085A5); // motor.cmdPos (high)
 			getProperty(0, watchFinger, 7, &value); // Get VALUE
-			cmd[cycles] = (value << 16) | cmd[cycles];
+			cmd[cycles] = (value << 16) | (cmd[cycles] & 0x0000FFFF);
 			setProperty(0, watchFinger, 6, FALSE, 0x08598); // pid.pe
 		}
 		getProperty(0, watchFinger, 7, &value); // Get VALUE
@@ -1960,6 +1968,9 @@ void debugNoise(int argc, char **argv, char c){
 		
 		error[cycles] = value;
 	}while(mode == 5);
+	
+	for(i = 11; i <= 14; i++)
+		setProperty(0, i, 8, FALSE, 0); // Idle each motor
 	
 	mean = 1.0 * sumX / cycles;
 	stdev = sqrt((1.0 * cycles * sumX2 - sumX * sumX) / (cycles * cycles - cycles));
@@ -2007,6 +2018,7 @@ void handleMenu(int argc, char **argv)
    switch(*c) {
    case 'W':
    case 'X':
+   case 'Y':
    	   debugNoise(argc, argv, *c);
    break;
    case 'H':
