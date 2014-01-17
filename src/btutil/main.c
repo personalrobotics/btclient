@@ -1906,8 +1906,8 @@ void debugNoise(int argc, char **argv, char c){
 	
 	if(argc != 5){
 		printf("\nUsage example: ./btutil -w 123 c 3\n");
-		printf("-w: move each finger specified, record pid.err\n");
-		printf("-x: move each finger specified, record motor.cmdPos and pid.err\n");
+		printf("-w: move each finger specified, activate and record pid.err on one finger\n");
+		printf("-x: move each finger specified, activate and record motor.cmdPos and pid.err on one finger\n");
 		printf("-y: activate each finger specified, move and record pid.err on one finger\n");
 		exit(0);
 	}
@@ -1941,7 +1941,14 @@ void debugNoise(int argc, char **argv, char c){
 			}
 		}
 	}
-	if(c == 'W' | c == 'Y')
+	
+	// If the watched finger is not included in the move list, just activate it
+	if(!strchr(argv[2], argv[4])){
+		setProperty(0, watchFinger, 78, FALSE, 0);
+		setProperty(0, watchFinger, 8, FALSE, 2);
+	}
+	
+	if(c == 'W' | c == 'Y' | c == 'Z')
 		setProperty(0, watchFinger, 6, FALSE, 0x08598); // pid.pe
 	
 	sumX = sumX2 = 0;
@@ -2019,6 +2026,7 @@ void handleMenu(int argc, char **argv)
    case 'W':
    case 'X':
    case 'Y':
+   case 'Z':
    	   debugNoise(argc, argv, *c);
    break;
    case 'H':
