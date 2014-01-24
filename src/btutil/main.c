@@ -1252,17 +1252,38 @@ void setMofst(int newID)
       //printf("\nPress enter when the index pulse is found: ");
       //mygetch();
       //mygetch();
-      printf("\nPlease wait (10 sec)...\n");
-      usleep(10000000); // Sleep for 10 sec
+      printf("\nPlease wait...\n");
+      
+      // Collect stats
+   sumX = sumX2 = 0;
+   max = -2E9;
+   min = +2E9;
+   for(i = 0; i < samples; i++){
+      //setPropertySlow(0,newID,FIND,0,IOFST);
+      getProperty(0,newID,IMOTOR,&dat);
+      if(dat > max) max = dat;
+      if(dat < min) min = dat;
+      sumX += dat;
+      sumX2 += dat * dat;
+      usleep(1000000/samples);
+   }
+   mean = 1.0 * sumX / samples;
+   stdev = sqrt((1.0 * samples * sumX2 - sumX * sumX) / (samples * samples - samples));
+   printf("\nMIN iSense = %ld", min);
+   printf("\nMAX iSense = %ld", max);
+   printf("\nMEAN iSense = %.2f", mean);
+   printf("\nSTDEV iSense = %.2f", stdev);
+   
+      //usleep(10000000); // Sleep for 10 sec
       if(vers <= 39){
          setPropertySlow(0,newID,ADDR,0,32970);
          getProperty(0,newID,VALUE,&dat);
       }else{
-         getProperty(0,newID,MOFST,&dat);
+         getProperty(0,newID,MECH,&dat);
       }
       printf("\nThe new MOFST is:%d\n",dat);
       setPropertySlow(0,newID,MODE,0,MODE_IDLE);
-      if(vers <= 39){
+      if(1){ // vers <= 39){
          setPropertySlow(0,newID,MOFST,0,dat);
          setPropertySlow(0,newID,SAVE,0,MOFST);
       }
