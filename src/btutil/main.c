@@ -1184,7 +1184,7 @@ void changeID(int oldID, int newID, int role)
 
 void setMofst(int newID)
 {
-   long dat, vers;
+   long dat, vers, role;
    int dummy, i, samples = 1024;
 
    long max, min;
@@ -1196,6 +1196,9 @@ void setMofst(int newID)
 
    getProperty(0,newID,IOFST,&dat);
    printf("\nThe old IOFST was: %d",dat);
+   
+   getProperty(0, newID, ROLE, &role);
+   role &= 0x000F; // 0 = WAM, 5 = BHand
 
    // Get a valid IOFST
    //#define IOFST_MIN (1800)
@@ -1220,18 +1223,24 @@ void setMofst(int newID)
    mean = 1.0 * sumX / samples;
    stdev = sqrt((1.0 * samples * sumX2 - sumX * sumX) / (samples * samples - samples));
    printf("\nMIN IOFST = %ld", min);
-   if(min < IOFST_MIN){
+   if(role != 5 && min < IOFST_MIN){
       printf(" -- FAIL");
       ++err;
    }
    printf("\nMAX IOFST = %ld", max);
-   if(max > IOFST_MAX){
+   if(role != 5 && max > IOFST_MAX){
       printf(" -- FAIL");
       ++err;
    }
+
    printf("\nMEAN IOFST = %.2f", mean);
+   if(mean < IOFST_MIN || mean > IOFST_MAX){
+      printf(" -- FAIL");
+      ++err;
+   }
+  
    printf("\nSTDEV IOFST = %.2f", stdev);
-   if(stdev > IOFST_STDEV){
+   if(role != 5 && stdev > IOFST_STDEV){
       printf(" -- FAIL");
       ++err;
    }
