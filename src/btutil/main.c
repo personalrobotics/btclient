@@ -1184,7 +1184,7 @@ void changeID(int oldID, int newID, int role)
 
 void setMofst(int newID)
 {
-   long dat, poles, cts, vers;
+   long dat, vers;
    int dummy, i, samples = 1024;
 
    long max, min;
@@ -1208,9 +1208,9 @@ void setMofst(int newID)
    sumX = sumX2 = 0;
    max = -2E9;
    min = +2E9;
-   setPropertySlow(0,newID,MODE,0,0);
    for(i = 0; i < samples; i++){
-      getProperty(0,newID,IMOTOR,&dat);
+      setPropertySlow(0,newID,FIND,0,IOFST);
+      getProperty(0,newID,IOFST,&dat);
       if(dat > max) max = dat;
       if(dat < min) min = dat;
       sumX += dat;
@@ -1235,24 +1235,14 @@ void setMofst(int newID)
       printf(" -- FAIL");
       ++err;
    }
-   // Report the new IOFST
-   printf("\nThe new IOFST is:%d\n",(int)mean);
-   
-   // Write the new IOFST
    setPropertySlow(0, newID, IOFST, 0, (long)mean);
-   
-   // Save the new IOFST
-   setPropertySlow(0,newID,SAVE,0,IOFST);
-         
+   printf("\nThe new IOFST is:%d\n",(int)mean);
+
    if(!err){
-      // Read the old MOFST
+      setPropertySlow(0,newID,MODE,0,MODE_TORQUE);
       getProperty(0,newID,MOFST,&dat);
       printf("\nThe old MOFST was:%d\n",dat);
-      
-      // Start commutating current
-      setPropertySlow(0,newID,MODE,0,MODE_TORQUE);
-      
-      // Initiate the FIND IOFST routine in firmware
+
       if(vers <= 39){
          setPropertySlow(0,newID,ADDR,0,32971);
          setPropertySlow(0,newID,VALUE,0,1);
@@ -1262,44 +1252,17 @@ void setMofst(int newID)
       //printf("\nPress enter when the index pulse is found: ");
       //mygetch();
       //mygetch();
-      printf("\nPlease wait...\n");
-      
-      // Collect stats
-   sumX = sumX2 = 0;
-   max = -2E9;
-   min = +2E9;
-   for(i = 0; i < samples; i++){
-      //setPropertySlow(0,newID,FIND,0,IOFST);
-      getProperty(0,newID,IMOTOR,&dat);
-      if(dat > max) max = dat;
-      if(dat < min) min = dat;
-      sumX += dat;
-      sumX2 += dat * dat;
-      usleep(1000000/samples);
-   }
-   mean = 1.0 * sumX / samples;
-   stdev = sqrt((1.0 * samples * sumX2 - sumX * sumX) / (samples * samples - samples));
-   printf("\nMIN iSense = %ld", min);
-   printf("\nMAX iSense = %ld", max);
-   printf("\nMEAN iSense = %.2f", mean);
-   printf("\nSTDEV iSense = %.2f", stdev);
-   
-      //usleep(10000000); // Sleep for 10 sec
+      printf("\nPlease wait (10 sec)...\n");
+      usleep(10000000); // Sleep for 10 sec
       if(vers <= 39){
          setPropertySlow(0,newID,ADDR,0,32970);
          getProperty(0,newID,VALUE,&dat);
       }else{
-         getProperty(0,newID,MECH,&dat);
-         getProperty(0,newID,POLES,&poles);
-         getProperty(0,newID,CTS,&cts);
-         dat = dat % (cts / poles * 2);
+         getProperty(0,newID,MOFST,&dat);
       }
       printf("\nThe new MOFST is:%d\n",dat);
-      
-      // Stop commutating current
       setPropertySlow(0,newID,MODE,0,MODE_IDLE);
-      
-      if(0){ // vers <= 39){
+      if(vers <= 39){
          setPropertySlow(0,newID,MOFST,0,dat);
          setPropertySlow(0,newID,SAVE,0,MOFST);
       }
