@@ -1513,12 +1513,12 @@ void cycleHand(void){
 	printf("\n\nPlease wait, hand is now initializing...\n\n");
 
     setPropertySlow(0,11,CMD,0,CMD_HI);
-    //usleep(2e6);
+    usleep(2e6);
 #if 1
     setPropertySlow(0,12,CMD,0,CMD_HI);
-    //usleep(2e6);
+    usleep(2e6);
     setPropertySlow(0,13,CMD,0,CMD_HI);
-    //usleep(2e6);
+    usleep(2e6);
     setPropertySlow(0,14,CMD,0,CMD_HI);
     usleep(2e6);
 #endif
