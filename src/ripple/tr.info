@@ -1,0 +1,14 @@
+PuckID : 1
+MotorSN : 1
+CtsPerRev : 4096
+Rev_F : 5
+Rev_R : 5
+SamplesPerRev : 4096
+SmoothCt : 5
+Epsilon : 2
+WaitSamples : 10
+Kp : 10
+Kd : 0
+Ki : 0
+ScalePct : 50
+SampleTime : 0.001
