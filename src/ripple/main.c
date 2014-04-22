@@ -51,6 +51,7 @@
 
 #define TEST_TR         (0)
 #define COLLECT_TR      (1)
+#define TR_DATA	        (2)
 
 #ifndef TRUE
 #define TRUE (1)
@@ -99,6 +100,7 @@ int     CANdev;
 int     progMode;
 double  sampleTime;
 int     scalePct;
+char 	**arg;
 
 /* Define the realtime threads */
 btrt_thread_struct    rt_thd, puck_thd, main_thd;
@@ -153,6 +155,41 @@ void warn_upon_switch(int sig __attribute__((unused)))
 }
 
 void main_thread(void *thd){
+	char **argv = arg;
+	   FILE* 	fp;
+   int	 	data;
+   long 	reply;
+   int 		puckID;
+   int		lineCt;
+   int		progress = 0;
+   int		i;
+	
+	if(progMode == TR_DATA){
+		// [1] = -d, [2] = id, [3] = -f, [4] = file
+		 if((fp = fopen(argv[4],"r")) == NULL){
+			 printf("Could not open %s, exiting.", argv[2]);
+			 exit(1);
+		 }
+		 fscanf(fp, "%*s"); // Skip first line
+		 puckID = atoi(argv[2]);
+		 fscanf(fp, "%d", &lineCt); // Line count
+		 printf("Data download to puck ID: %d\n", puckID);
+		 CANdev = 0;
+		 for(i = 0; i < lineCt; i++){
+			 fscanf(fp, "%d", &data); // Read data
+			 setProperty(CANdev, puckID, ADDR, FALSE, -256-i*2); // Set address
+			 setProperty(CANdev, puckID, VALUE, FALSE, data); // Write data
+			 getProperty(CANdev, puckID, MECH, &reply); // Ensure puck is ready
+			 progress = i * 100.0 / lineCt; 
+			 printf("Progress: %d\r", progress);
+			 fflush(stdout);
+		 }
+		 printf("\nDownload complete.\n");
+		 fclose(fp);
+		 
+		 exit(0);
+	}
+	
    doTR(progMode);
 }
 
@@ -503,6 +540,8 @@ int collectTR()
     
     sampleDistance = encCtsPerRev / samplesPerRev;
     
+    printf("\nCollecting Data...\n");
+    
     printf("Allocating TR arrays: %d elements\n", encCtsPerRev);
     #if 0
     if((aTf = (int *)malloc(encCtsPerRev * sizeof(int))) == NULL);
@@ -717,14 +756,15 @@ int testTR()
     long    reply;
     long    mech;
     int     i;
-    int		hysteresis_distance = 20;
+    int		hysteresis_distance = 5;
     long	hysteresis_value;
     FILE    *in;
     char    fileName[20];
     
     //printf("\nPlease enter *.tr file name: ");
     //scanf("%s", fileName);
-    sprintf(fileName, "motor%d.tr", motorSN);
+    sprintf(fileName, "motorBrs2.trm", motorSN);
+    //sprintf(fileName, "motor%d.trm", motorSN);
     //sprintf(fileName, "motor%d.raw", motorSN);
     
     if((in = fopen(fileName, "r")) == NULL)
@@ -847,7 +887,8 @@ int initTR()
 /* Program entry point */
 int main(int argc, char **argv)
 {
-   int   err;        // Generic error variable for function calls
+   int   	err;        // Generic error variable for function calls
+
    
    /* Allow hard real time process scheduling for non-root users */
 #ifdef RTAI   
@@ -874,12 +915,20 @@ int main(int argc, char **argv)
       usleep(10000);
 
    progMode = TEST_TR;
-   if(argc > 1)
-      if(!strcmp(argv[1], "-c"))
+   if(argc > 1){
+      if(!strcmp(argv[1], "-c")){
          progMode = COLLECT_TR;
-      
+     }else if(!strcmp(argv[1], "-d")){
+     	 progMode = TR_DATA;
+     	 arg = argv;
+     }
+     
+     
+     	
+   }
+   
    /* Loop until Ctrl-C is pressed */
-   printf("\nCollecting Data...\n");
+   
    
    btrt_thread_create(&main_thd, "main", 45, (void*)main_thread, NULL);
    
