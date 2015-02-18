@@ -139,6 +139,7 @@ void handleMenu(int argc, char **argv) {
 	int			def1[] = {   0,    1,    4, 1000,    0,    0, 256, 1536,   0, 1456,   16, 4072,  18,   300}; /* MF95 */
 	int			def2[] = {   0,    1,    4, 1000,    0,    0, 256, 1536,   0,  500,   12, 2524,  11,   300}; /* 4DOF */
 	int			def3[] = {   0,    1,    4, 1000,    0,    0, 256, 1536,   0,  500,    8,  143,   1,   300}; /* RSF-5B */
+	int			*def;
 	int			newID, role;
 	long		sum;
 
@@ -169,20 +170,53 @@ void handleMenu(int argc, char **argv) {
 		break;
 	case 'P': // Set default properties
 		id = atol(argv[2]);
+		if(argc > 3)
+			a = atol(argv[3]);
+		else
+			a = 8;
+		
+		switch(a){
+			case 16:
+				def = def1;
+			break;
+			case 12:
+				def = def2;
+			break;
+			case 8:
+				def = def3;
+			break;
+			default:
+				printf("\nUsage: ./p3util -p <id> <poles>\n");
+				exit(1);
+		}
 		
 		i = 0;
 		while(prop[i] != -1){
-			printf("Setting property %d to %d...", prop[i], def1[i]);
-			setProperty(0, id, prop[i], FALSE, def1[i]);
-			setProperty(0, id, SAVE, FALSE, prop[i]);
+			printf("Setting property %d to %d...", prop[i], def[i]);
+			setProperty(0, id, prop[i], FALSE, def[i]); usleep(1e4);
+			setProperty(0, id, SAVE, FALSE, prop[i]); usleep(1e4);
 			getProperty(0, id, prop[i], &lval);
-			if(lval == def1[i]){
+			if(lval == def[i]){
 				printf("ok.\n");
 			}else{
-				printf("fail.\n");
-				exit(1);
+				printf("!!! FAIL !!!\n");
+				//exit(1);
 			}
 			++i;
+		}
+		break;
+	case 'S': // Set Serial Number
+		id = atol(argv[2]);
+		i = atol(argv[3]);
+		printf("Setting serial number of puck ID %d to %d...", id, i);
+		setProperty(0, id, 2, FALSE, i);
+		setProperty(0, id, SAVE, FALSE, 2);
+		getProperty(0, id, 2, &lval);
+		if(lval == i){
+			printf("ok.\n");
+		}else{
+			printf("!!! FAIL !!!\n");
+			//exit(1);
 		}
 		break;
 	case 'G': // Get properties
@@ -225,8 +259,8 @@ void handleMenu(int argc, char **argv) {
 			  getProperty(0, id, VERS, &lval);
 		   }
 		   setProperty(0, id, ID, 0, newID); /* Set the new ID */
-		   setProperty(0, id, SAVE, 0, ID); /* Save the new values to EEPROM */
-		   getProperty(0, id, VERS, &lval);
+		   setProperty(0, newID, SAVE, 0, ID); /* Save the new values to EEPROM */
+		   getProperty(0, newID, VERS, &lval);
 		   
 		printf("\nDone. (Cycle power to load new ID)\n");
 		break;
@@ -237,26 +271,27 @@ void handleMenu(int argc, char **argv) {
 		printf("Old IOFST = %d\n", lval);
 		sum = 0;
 		for(i = 0; i < 32; i++){
-			setProperty(0, id, FIND, FALSE, IOFST);
-			getProperty(0, id, IOFST, &lval);
+			//setProperty(0, id, FIND, FALSE, IOFST);
+			//getProperty(0, id, IOFST, &lval);
+			getProperty(0, id, IMOTOR, &lval);
 			sum += lval;
 		}
 		sum >>= 5; // /32
 		if(sum < 1500 || sum > 2100){
-			printf("FAIL: IOFST = %d\n", sum);
+			printf("FAIL: IOFST = %ld\n", sum);
 			exit(1);
 		}
-		printf("New IOFST = %d\n", sum);
+		printf("New IOFST = %ld\n", sum);
 		setProperty(0, id, IOFST, FALSE, sum);
 		setProperty(0, id, SAVE, FALSE, IOFST);
 		
 		getProperty(0, id, MOFST, &lval);
-		printf("Old MOFST = %d\n", lval);
+		printf("Old MOFST = %ld\n", lval);
 		
 		setProperty(0, id, FIND, FALSE, MOFST);
 		usleep(6 * 1e6);
 		getProperty(0, id, MOFST, &lval);
-		printf("New MOFST = %d\n", lval);
+		printf("New MOFST = %ld\n", lval);
 		printf("Done.\n");
 		
 		break;
@@ -450,7 +485,10 @@ void handleMenu(int argc, char **argv) {
 			//usleep(10000);
 		}
 		
-
+		break;
+	default: // Print help text
+		printf("\nUsage:\n./p3util [e p i g f t]\ne = Enumerate\np = Set default properties\ni = Set ID (& ROLE)\ng = Get properties\nf = Find offsets\nt = Tune motor\n");
+		break;
 		
 	}
 	printf("\n\n");
