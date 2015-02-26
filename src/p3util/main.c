@@ -134,11 +134,11 @@ void handleMenu(int argc, char **argv) {
 	long		lval;
 	int 		a, key, v;
 	FILE		*fp;
-					/*    GRPA, GRPB, GRPC,   MT, HOLD,TSTOP,  KP,   KD,  KI, IPNM,POLES,  IKP, IKI, IKCOR */
-	int			prop[] = {  26,   27,   28,   43,   77,   78,  79,   80,  81,   86,   90,   91,  92,    93,  -1};
-	int			def1[] = {   0,    1,    4, 1000,    0,    0, 256, 1536,   0, 1456,   16, 4072,  18,   300}; /* MF95 */
-	int			def2[] = {   0,    1,    4, 1000,    0,    0, 256, 1536,   0,  500,   12, 2524,  11,   300}; /* 4DOF */
-	int			def3[] = {   0,    1,    4, 1000,    0,    0, 256, 1536,   0,  500,    8,  143,   1,   300}; /* RSF-5B */
+					/*    GRPA, GRPB, GRPC,   MT,  MOV, HOLD,TSTOP,   KP,   KD, KI, IPNM, POLES,  IKP, IKI, IKCOR */
+	int			prop[] = {  26,   27,   28,   43,   47,   77,   78,   79,   80, 81,   86,    90,   91,  92,    93,  -1};
+	int			def1[] = {   0,    1,    4, 1000,   37,    0,    0,  256, 1536,  0, 1456,   16, 4072,  18,   300}; /* MF95 */
+	int			def2[] = {   0,    1,    4, 1000,   37,    0,    0,  256, 1536,  0,  500,   12, 2524,  11,   300}; /* 4DOF */
+	int			def3[] = {   0,    1,    4, 1000,   37,    0,    0,  200,16000,  0,  500,    8, 1000, 500,   500}; /* RSF-5B */
 	int			*def;
 	int			newID, role;
 	long		sum;
@@ -198,19 +198,21 @@ void handleMenu(int argc, char **argv) {
 			getProperty(0, id, prop[i], &lval);
 			if(lval == def[i]){
 				printf("ok.\n");
+				
 			}else{
 				printf("!!! FAIL !!!\n");
 				//exit(1);
 			}
 			++i;
 		}
+		printf("If POLES was changed, you must cycle power now...\n");
 		break;
 	case 'S': // Set Serial Number
 		id = atol(argv[2]);
 		i = atol(argv[3]);
 		printf("Setting serial number of puck ID %d to %d...", id, i);
-		setProperty(0, id, 2, FALSE, i);
-		setProperty(0, id, SAVE, FALSE, 2);
+		setProperty(0, id, 2, FALSE, i); usleep(1e4);
+		setProperty(0, id, SAVE, FALSE, 2); usleep(1e4);
 		getProperty(0, id, 2, &lval);
 		if(lval == i){
 			printf("ok.\n");
@@ -254,15 +256,15 @@ void handleMenu(int argc, char **argv) {
 		  
 		  /* Set the ROLE */
 		   if(role >= 0){
-			  setProperty(0, id, ROLE, FALSE, role);
-			  setProperty(0, id, SAVE, FALSE, ROLE); 
+			  setProperty(0, id, ROLE, FALSE, role); usleep(1e4);
+			  setProperty(0, id, SAVE, FALSE, ROLE); usleep(1e4);
 			  getProperty(0, id, VERS, &lval);
 		   }
-		   setProperty(0, id, ID, 0, newID); /* Set the new ID */
-		   setProperty(0, newID, SAVE, 0, ID); /* Save the new values to EEPROM */
+		   setProperty(0, id, ID, 0, newID); usleep(1e4); /* Set the new ID */
+		   setProperty(0, newID, SAVE, 0, ID); usleep(1e4); /* Save the new values to EEPROM */
 		   getProperty(0, newID, VERS, &lval);
 		   
-		printf("\nDone. (Cycle power to load new ID)\n");
+		printf("\nDone. (New ID is active now)\n");
 		break;
 	case 'F': // Find offsets
 		id = atol(argv[2]);
@@ -282,13 +284,13 @@ void handleMenu(int argc, char **argv) {
 			exit(1);
 		}
 		printf("New IOFST = %ld\n", sum);
-		setProperty(0, id, IOFST, FALSE, sum);
-		setProperty(0, id, SAVE, FALSE, IOFST);
+		setProperty(0, id, IOFST, FALSE, sum); usleep(1e4);
+		setProperty(0, id, SAVE, FALSE, IOFST); usleep(1e4);
 		
 		getProperty(0, id, MOFST, &lval);
 		printf("Old MOFST = %ld\n", lval);
 		
-		setProperty(0, id, FIND, FALSE, MOFST);
+		setProperty(0, id, FIND, FALSE, MOFST); usleep(1e4);
 		usleep(6 * 1e6);
 		getProperty(0, id, MOFST, &lval);
 		printf("New MOFST = %ld\n", lval);
@@ -369,6 +371,10 @@ void handleMenu(int argc, char **argv) {
 						printf("Set IKI to %d\n", value[key]);
 						setProperty(0, id, IKI, FALSE, value[key]);
 						break;
+					case 6: // MOV
+						printf("Set MOV to %d\n", value[key]);
+						setProperty(0, id, MOV, FALSE, value[key]);
+						break;
 					case 7: // Torque
 						printf("Set Torque to %d\n", value[key]);
 						setProperty(0, id, T, FALSE, value[key]);
@@ -395,18 +401,18 @@ void handleMenu(int argc, char **argv) {
 			if(key == 41){ // Run
 				if(v){
 					printf("Velocity\n");
-					setProperty(0, id, TSTOP, FALSE, 0);
-					setProperty(0, id, MV, FALSE, 32000);
-					setProperty(0, id, MODE, FALSE, 4);
+					setProperty(0, id, TSTOP, FALSE, 0); usleep(1e4);
+					setProperty(0, id, MV, FALSE, 32000); usleep(1e4);
+					setProperty(0, id, MODE, FALSE, 4); usleep(1e4);
 				}
 			}
 			
 			if(key == 45){ // Torque
 				if(v){
 					printf("Torque\n");
-					setProperty(0, id, TSTOP, FALSE, 0);
+					setProperty(0, id, TSTOP, FALSE, 0); usleep(1e4);
 					//setProperty(0, id, MV, FALSE, 32000);
-					setProperty(0, id, MODE, FALSE, 2);
+					setProperty(0, id, MODE, FALSE, 2); usleep(1e4);
 				}
 			}
 			
