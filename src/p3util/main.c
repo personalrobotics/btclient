@@ -50,6 +50,8 @@
 #include <syslog.h>
 #include <sys/mman.h>
 #include <unistd.h>
+#include <fcntl.h>
+#include <sys/time.h>
 
 /*==============================*
  * INCLUDES - Project Files     *
@@ -134,6 +136,7 @@ void handleMenu(int argc, char **argv) {
 	long		lval;
 	int 		a, key, v;
 	FILE		*fp;
+	int			dev;
 					/*    GRPA, GRPB, GRPC,   MT,  MOV, HOLD,TSTOP,   KP,   KD, KI, IPNM, POLES,  IKP, IKI, IKCOR */
 	int			prop[] = {  26,   27,   28,   43,   47,   77,   78,   79,   80, 81,   86,    90,   91,  92,    93,  -1};
 	int			def1[] = {   0,    1,    4, 1000,   37,    0,    0,  500,25000,  0, 1456,    16, 1000, 500,   300}; /* MF95 */
@@ -142,6 +145,11 @@ void handleMenu(int argc, char **argv) {
 	int			*def;
 	int			newID, role;
 	long		sum;
+	
+	struct timeval		tstart, tnow, tdiff;
+	long		p1, p2, bias, gain, pos;
+	double		shift, omega, t;
+	int			cycle = 0, inc;
 
 	c = argv[1];
 	while(*c == '-')
@@ -298,6 +306,8 @@ void handleMenu(int argc, char **argv) {
 		
 		break;
 	case 'T': // Tune using nanoKontrol2
+		
+		
 		if(!cnt){
 			// No pucks were found
 			printf("\nNo Pucks Found!\n");
@@ -328,18 +338,46 @@ void handleMenu(int argc, char **argv) {
 		printf("Initial IKP = %d (%0.4lf)\n", value[4], value[4]/32768.0);
 		getProperty(0, id, IKI, &lval); value[5] = lval;
 		printf("Initial IKI = %d (%0.4lf)\n", value[5], value[5]/32768.0);
+		getProperty(0, id, T, &lval); value[7] = lval;
 		
 		printf("Opening NanoKontrol2 device...\n");
-		if((fp = fopen("/dev/snd/midiC1D0","r")) == NULL){
+		if((dev = open("/dev/snd/midiC1D0", O_NONBLOCK)) == NULL){
 			printf("Unable to open NanoKontrol2 device!\n");
 			return(1);
 		}
 	
 		printf("Ready to tune!\n");
+		
+		char buf[3];
+		int cnt, ptr = 0;
 		while(1){
-			a = fgetc(fp); // "176"
-			key = fgetc(fp); // id
-			v = fgetc(fp); // value
+			
+			if(cycle){
+				gettimeofday(&tnow, NULL);
+				timersub(&tnow, &tstart, &tdiff);
+				t = tdiff.tv_sec + tdiff.tv_usec / 1e6;
+				pos = bias + gain * sin(6.28 * omega * t + shift);
+				setProperty(0, id, P, FALSE, pos);
+				//printf("Set P to %ld (t = %.6lf)\n", pos, t);
+			}
+			
+			// Accumulate an input
+			cnt = read(dev, &buf[ptr], 1); // "176"
+			if(cnt > 0)
+				ptr += cnt;
+			
+			if(ptr != 3){
+				usleep(1000);
+				continue;
+			}
+			
+			// We have a new input
+			ptr = 0; // Reset the buffer pointer
+			
+			a = buf[0];
+			key = buf[1];
+			v = buf[2];
+			
 			
 			if(key >= 0 && key <= 7){ // Sliders
 				if(!m[key]){
@@ -395,6 +433,7 @@ void handleMenu(int argc, char **argv) {
 				if(v){
 					printf("Stop\n");
 					setProperty(0, id, MODE, FALSE, 0);
+					cycle = 0;
 				}
 			}
 			
@@ -420,7 +459,7 @@ void handleMenu(int argc, char **argv) {
 				m[key-48] = v;
 			}
 			
-			if(key >= 64 && key <= 71){ // R
+			if(key >= 64 && key <= 71 && v == 0){ // R
 				// Reset the value
 				value[key-64] = v = 0;
 				switch(key-64){
@@ -487,6 +526,117 @@ void handleMenu(int argc, char **argv) {
 				//getProperty(0, id, STAT, &lval);
 
 			}
+			
+			if(key == 58 && v == 0){ // Save position 1
+				getProperty(0, id, P, &lval); p1 = lval;
+				printf("Set position_A to %ld\n", p1);
+			}
+			
+			if(key == 59 && v == 0){ // Save position 2
+				getProperty(0, id, P, &lval); p2 = lval;
+				printf("Set position_B to %ld\n", p2);
+			}
+			
+			if(key == 46 && v == 0){ // Cycle
+				// Reset time
+				gettimeofday(&tstart, NULL);
+				
+				// Reset frequency
+				omega = 0;
+				
+				// Make sure P is between p1 and p2
+				printf("Moving to initial position...\n");
+				setProperty(0, id, MODE, FALSE, 0);
+				setProperty(0, id, TSTOP, FALSE, 200);
+				setProperty(0, id, HOLD, FALSE, 0);
+				getProperty(0, id, P, &lval);
+				if(p2 > p1){ 
+					if(lval > p2){
+						// Move to p2
+						setProperty(0, id, M, FALSE, p2);
+					}else if(lval < p1){
+						// Move to p1
+						setProperty(0, id, M, FALSE, p1);
+					}
+				}else{
+					if(lval > p1){
+						// Move to p1
+						setProperty(0, id, M, FALSE, p1);
+					}else if(lval < p2){
+						// Move to p2
+						setProperty(0, id, M, FALSE, p2);
+					}
+				}
+				// Wait until MODE == 0
+				do{
+					usleep(1000);
+					getProperty(0, id, MODE, &lval);
+				}while(lval != 0);
+				printf("Ready!\n");
+				
+				// Find bias
+				bias = (p1 + p2) / 2;
+				
+				// Find gain
+				gain = labs(p2 - p1);
+				
+				// Find shift
+				getProperty(0, id, P, &lval);
+				shift = asin(1.0 * (lval - bias) / gain);
+				
+				// Enable sinusoid
+				setProperty(0, id, TSTOP, FALSE, 0);
+				setProperty(0, id, MODE, FALSE, 3);
+				cycle = 1;
+				printf("Sinusoid Enabled.\n", omega);
+				printf("Bias = %ld, Gain = %ld, Omega = %0.4lf, Shift = %0.4lf\n",
+					bias, gain, omega, shift);
+			}
+			
+			if(key == 43 && v == 0){ // Decrease omega
+				if(omega > 0){
+					
+					// Get commanded P
+					lval = bias + gain * sin(6.28 * omega * t + shift); 
+					
+					// Are we incrementing position with increasing time?
+					inc = lval < bias + gain * sin(6.28 * omega * (t + 0.001) + shift);
+					
+					omega -= 0.01;
+					printf("Frequency = %0.4f\n", omega);
+					
+					if(inc)
+						shift = asin(1.0 * (lval - bias) / gain) - 6.28 * omega * t;
+					else
+						shift = 3.14 + asin(-1.0 * (lval - bias) / gain) - 6.28 * omega * t;
+
+					printf("%ld + %ld * sin(6.28 * %.4f * %.4f + %.4f) = %.0f (%ld)\n",
+						bias, gain, omega, t, shift, bias + gain * sin(6.28 * omega * t + shift), lval);
+					
+				}
+			}
+			
+			if(key == 44 && v == 0){ // Increase omega
+				
+				// Get commanded P
+				lval = bias + gain * sin(6.28 * omega * t + shift); 
+				
+				// Are we incrementing position with increasing time?
+				inc = lval < bias + gain * sin(6.28 * omega * (t + 0.001) + shift);
+				
+				omega += 0.01;
+				printf("Frequency = %0.4f\n", omega);
+				
+				if(inc)
+					shift = asin(1.0 * (lval - bias) / gain) - 6.28 * omega * t;
+				else
+					shift = 3.14 + asin(-1.0 * (lval - bias) / gain) - 6.28 * omega * t;
+
+				printf("%ld + %ld * sin(6.28 * %.4f * %.4f + %.4f) = %.0f (%ld)\n",
+					bias, gain, omega, t, shift, bias + gain * sin(6.28 * omega * t + shift), lval);
+				
+			}
+			
 			
 			//usleep(10000);
 		}

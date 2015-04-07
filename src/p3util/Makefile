@@ -4,7 +4,7 @@
 include ../../config.mk
 include ../../common.mk
 
-OBJS = main.o
+OBJS = main.o 
 TARG = p3util
 
 # Done with defines, now for the real work
