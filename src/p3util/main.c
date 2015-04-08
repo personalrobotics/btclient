@@ -137,11 +137,11 @@ void handleMenu(int argc, char **argv) {
 	int 		a, key, v;
 	FILE		*fp;
 	int			dev;
-					/*    GRPA, GRPB, GRPC,   MT,  MOV, HOLD,TSTOP,   KP,   KD, KI, IPNM, POLES,  IKP, IKI, IKCOR */
-	int			prop[] = {  26,   27,   28,   43,   47,   77,   78,   79,   80, 81,   86,    90,   91,  92,    93,  -1};
-	int			def1[] = {   0,    1,    4, 1000,   37,    0,    0,  500,25000,  0, 1456,    16, 1000, 500,   300}; /* MF95 */
-	int			def2[] = {   0,    1,    4, 1000,   37,    0,    0,  500,25000,  0,  500,    12, 1000, 500,   500}; /* 4DOF */
-	int			def3[] = {   0,    1,    4, 1000,   37,    0,    0,  200,16000,  0,  500,     8, 1000, 500,   500}; /* RSF-5B */
+					/*    GRPA, GRPB, GRPC,   MT,   MV,  MOV, HOLD,TSTOP,   KP,   KD, KI, ACCEL, IPNM, POLES,  IKP, IKI, IKCOR */
+	int			prop[] = {  26,   27,   28,   43,   45,   47,   77,   78,   79,   80, 81,    82,   86,    90,   91,  92,    93,  -1};
+	int			def1[] = {   0,    1,    4, 1000,    4,   37,    0,    0,  500,25000,  0,     1, 1456,    16, 1000, 500,   300}; /* MF95 */
+	int			def2[] = {   0,    1,    4, 1000,    8,   37,    0,    0,  500,25000,  0,     1,  500,    12, 1000, 500,   500}; /* 4DOF */
+	int			def3[] = {   0,    1,    4, 1000,   40,   37,    0,    0,  200,16000,  0,     1,  500,     8, 1000, 500,   500}; /* RSF-5B */
 	int			*def;
 	int			newID, role;
 	long		sum;
@@ -350,6 +350,9 @@ void handleMenu(int argc, char **argv) {
 		
 		char buf[3];
 		int cnt, ptr = 0;
+		long ap, lastap = 0, tcmd;
+		double rpm, frpm = 0, ftcmd = 0, last_t;
+		
 		while(1){
 			
 			if(cycle){
@@ -357,7 +360,34 @@ void handleMenu(int argc, char **argv) {
 				timersub(&tnow, &tstart, &tdiff);
 				t = tdiff.tv_sec + tdiff.tv_usec / 1e6;
 				pos = bias + gain * sin(6.28 * omega * t + shift);
-				setProperty(0, id, P, FALSE, pos);
+				setProperty(0, id, P, FALSE, pos); usleep(100);
+				
+				// Read actual position
+				getProperty(0, id, P, &ap);
+				
+				// Read applied current
+				getProperty(0, id, T, &tcmd);
+				
+				// Calculate RPM
+				if(lastap){
+					rpm = (ap - lastap) / (t - last_t); // Change in position over change in time
+					rpm = rpm * 60 / 4096 / 100; // Convert from cts/s @ motor to RPM at gearbox
+				}
+				lastap = ap;
+				last_t = t;
+				
+				// Filter RPM
+				frpm = (63 * frpm + rpm) / 64;
+				
+				// Filter current
+				ftcmd = (63 * ftcmd + tcmd) / 64;
+				
+				// Display values
+				printf("\rFreq: %.2f Hz, iPhase: %5.0f mA, RPM: %5.0f\t\t", 
+					omega, tcmd * 1.34, rpm);
+					
+				fflush(stdout);
+				
 				//printf("Set P to %ld (t = %.6lf)\n", pos, t);
 			}
 			
@@ -441,7 +471,8 @@ void handleMenu(int argc, char **argv) {
 				if(v){
 					printf("Velocity\n");
 					setProperty(0, id, TSTOP, FALSE, 0); usleep(1e4);
-					setProperty(0, id, MV, FALSE, 32000); usleep(1e4);
+					setProperty(0, id, V, FALSE, 0); usleep(1e4);
+					setProperty(0, id, MV, FALSE, 100); usleep(1e4);
 					setProperty(0, id, MODE, FALSE, 4); usleep(1e4);
 				}
 			}
@@ -544,45 +575,28 @@ void handleMenu(int argc, char **argv) {
 				// Reset frequency
 				omega = 0;
 				
+				// Find bias
+				bias = (p1 + p2) / 2;
+				
+				// Find gain
+				gain = labs(p2 - p1) / 2;
+				
+				// Find shift
+				shift = 0; //asin(1.0 * (lval - bias) / gain);
+				
 				// Make sure P is between p1 and p2
-				printf("Moving to initial position...\n");
-				setProperty(0, id, MODE, FALSE, 0);
-				setProperty(0, id, TSTOP, FALSE, 200);
-				setProperty(0, id, HOLD, FALSE, 0);
-				getProperty(0, id, P, &lval);
-				if(p2 > p1){ 
-					if(lval > p2){
-						// Move to p2
-						setProperty(0, id, M, FALSE, p2);
-					}else if(lval < p1){
-						// Move to p1
-						setProperty(0, id, M, FALSE, p1);
-					}
-				}else{
-					if(lval > p1){
-						// Move to p1
-						setProperty(0, id, M, FALSE, p1);
-					}else if(lval < p2){
-						// Move to p2
-						setProperty(0, id, M, FALSE, p2);
-					}
-				}
+				printf("Moving to center (%ld)...\n", bias);
+				setProperty(0, id, MODE, FALSE, 0); usleep(1000);
+				setProperty(0, id, TSTOP, FALSE, 1000); usleep(1000);
+				setProperty(0, id, HOLD, FALSE, 0); usleep(1000);
+				setProperty(0, id, M, FALSE, bias); usleep(1000);
+					
 				// Wait until MODE == 0
 				do{
 					usleep(1000);
 					getProperty(0, id, MODE, &lval);
 				}while(lval != 0);
 				printf("Ready!\n");
-				
-				// Find bias
-				bias = (p1 + p2) / 2;
-				
-				// Find gain
-				gain = labs(p2 - p1);
-				
-				// Find shift
-				getProperty(0, id, P, &lval);
-				shift = asin(1.0 * (lval - bias) / gain);
 				
 				// Enable sinusoid
 				setProperty(0, id, TSTOP, FALSE, 0);
@@ -602,16 +616,16 @@ void handleMenu(int argc, char **argv) {
 					// Are we incrementing position with increasing time?
 					inc = lval < bias + gain * sin(6.28 * omega * (t + 0.001) + shift);
 					
-					omega -= 0.01;
-					printf("Frequency = %0.4f\n", omega);
+					omega -= 0.05;
+					//printf("Frequency = %0.4f Hz\n", omega);
 					
 					if(inc)
 						shift = asin(1.0 * (lval - bias) / gain) - 6.28 * omega * t;
 					else
 						shift = 3.14 + asin(-1.0 * (lval - bias) / gain) - 6.28 * omega * t;
 
-					printf("%ld + %ld * sin(6.28 * %.4f * %.4f + %.4f) = %.0f (%ld)\n",
-						bias, gain, omega, t, shift, bias + gain * sin(6.28 * omega * t + shift), lval);
+					//printf("%ld + %ld * sin(6.28 * %.4f * %.4f + %.4f) = %.0f (%ld)\n",
+					//	bias, gain, omega, t, shift, bias + gain * sin(6.28 * omega * t + shift), lval);
 					
 				}
 			}
@@ -624,19 +638,63 @@ void handleMenu(int argc, char **argv) {
 				// Are we incrementing position with increasing time?
 				inc = lval < bias + gain * sin(6.28 * omega * (t + 0.001) + shift);
 				
-				omega += 0.01;
-				printf("Frequency = %0.4f\n", omega);
+				omega += 0.05;
+				//printf("Frequency = %0.4f Hz\n", omega);
 				
 				if(inc)
 					shift = asin(1.0 * (lval - bias) / gain) - 6.28 * omega * t;
 				else
 					shift = 3.14 + asin(-1.0 * (lval - bias) / gain) - 6.28 * omega * t;
 
-				printf("%ld + %ld * sin(6.28 * %.4f * %.4f + %.4f) = %.0f (%ld)\n",
-					bias, gain, omega, t, shift, bias + gain * sin(6.28 * omega * t + shift), lval);
+				//printf("%ld + %ld * sin(6.28 * %.4f * %.4f + %.4f) = %.0f (%ld)\n",
+				//	bias, gain, omega, t, shift, bias + gain * sin(6.28 * omega * t + shift), lval);
 				
 			}
 			
+			if(key == 60 && v == 0){ // Auto-home
+				printf("Auto-homing...\n");
+				setProperty(0, id, MT, FALSE, 300); usleep(1000);
+				setProperty(0, id, HOLD, FALSE, 0); usleep(1000);
+				setProperty(0, id, MODE, FALSE, 0); usleep(1000);
+				setProperty(0, id, TSTOP, FALSE, 0); usleep(1000);
+				setProperty(0, id, MODE, FALSE, 4); usleep(1000);
+				setProperty(0, id, V, FALSE, 40); usleep(1000);
+				setProperty(0, id, TSTOP, FALSE, 1000); usleep(1000);
+			
+				// Wait until MODE == 0
+				do{
+					usleep(1000);
+					getProperty(0, id, MODE, &lval);
+				}while(lval != 0);
+				
+				getProperty(0, id, P, &lval); p1 = lval;
+				printf("Set position_A to %ld\n", p1);
+				
+				setProperty(0, id, TSTOP, FALSE, 0); usleep(1000);
+				setProperty(0, id, MODE, FALSE, 4); usleep(1000);
+				setProperty(0, id, V, FALSE, -40); usleep(1000);
+				setProperty(0, id, TSTOP, FALSE, 1000); usleep(1000);
+			
+				// Wait until MODE == 0
+				do{
+					usleep(1000);
+					getProperty(0, id, MODE, &lval);
+				}while(lval != 0);
+				
+				// Restore full MT
+				setProperty(0, id, MT, FALSE, 1000); usleep(1000);
+				
+				getProperty(0, id, P, &lval); p2 = lval;
+				printf("Set position_B to %ld\n", p2);
+				
+				printf("Adjusting positions by 5%\n");
+				gain = (p1 - p2) / 20;
+				p1 -= gain;
+				p2 += gain;
+				
+				printf("Press 'Cycle' to begin\n");
+				
+			}
 			
 			//usleep(10000);
 		}
