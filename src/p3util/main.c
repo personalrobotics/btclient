@@ -213,6 +213,19 @@ void handleMenu(int argc, char **argv) {
 			}
 			++i;
 		}
+		// Set PIDX
+		printf("Setting PIDX to %d...", (id-1) % 4 + 1);
+		setProperty(0, id, PIDX, FALSE, (id-1) % 4 + 1); usleep(1e4);
+		setProperty(0, id, SAVE, FALSE, PIDX); usleep(1e4);
+		getProperty(0, id, PIDX, &lval);
+		if(lval == (id-1) % 4 + 1){
+			printf("ok.\n");
+			
+		}else{
+			printf("!!! FAIL !!!\n");
+			//exit(1);
+		}
+			
 		printf("If POLES was changed, you must cycle power now...\n");
 		break;
 	case 'S': // Set Serial Number
@@ -338,6 +351,8 @@ void handleMenu(int argc, char **argv) {
 		printf("Initial IKP = %d (%0.4lf)\n", value[4], value[4]/32768.0);
 		getProperty(0, id, IKI, &lval); value[5] = lval;
 		printf("Initial IKI = %d (%0.4lf)\n", value[5], value[5]/32768.0);
+		getProperty(0, id, MT, &lval); value[6] = lval;
+		printf("Initial MT = %d (%0.4lf)\n", value[6], value[6]/32768.0);
 		getProperty(0, id, T, &lval); value[7] = lval;
 		
 		printf("Opening NanoKontrol2 device...\n");
@@ -349,9 +364,10 @@ void handleMenu(int argc, char **argv) {
 		printf("Ready to tune!\n");
 		
 		char buf[3];
-		int cnt, ptr = 0;
+		int cnt, ptr = 0, mt = 1000;
 		long ap, lastap = 0, tcmd;
 		double rpm, frpm = 0, ftcmd = 0, last_t;
+		double maxrpm=-1000, minrpm=1000, avgrpm=0;
 		
 		while(1){
 			
@@ -359,14 +375,17 @@ void handleMenu(int argc, char **argv) {
 				gettimeofday(&tnow, NULL);
 				timersub(&tnow, &tstart, &tdiff);
 				t = tdiff.tv_sec + tdiff.tv_usec / 1e6;
-				pos = bias + gain * sin(6.28 * omega * t + shift);
-				setProperty(0, id, P, FALSE, pos); usleep(100);
+				//pos = bias + gain * sin(6.28 * omega * t + shift);
+				pos = 0 + mt * sin(6.28 * omega * t + 0);
+				//setProperty(0, id, P, FALSE, pos); usleep(100);
+				setProperty(0, id, T, FALSE, pos); usleep(100);
 				
 				// Read actual position
 				getProperty(0, id, P, &ap);
 				
 				// Read applied current
-				getProperty(0, id, T, &tcmd);
+				//getProperty(0, id, T, &tcmd);
+				tcmd = pos;
 				
 				// Calculate RPM
 				if(lastap){
@@ -377,14 +396,17 @@ void handleMenu(int argc, char **argv) {
 				last_t = t;
 				
 				// Filter RPM
-				frpm = (63 * frpm + rpm) / 64;
+				frpm = (1023 * frpm + fabs(rpm)) / 1024;
 				
 				// Filter current
 				ftcmd = (63 * ftcmd + tcmd) / 64;
 				
+				if(rpm > maxrpm) maxrpm = rpm;
+				if(rpm < minrpm) minrpm = rpm;
+				avgrpm = (avgrpm + fabs(rpm)) / 2;
 				// Display values
-				printf("\rFreq: %.2f Hz, iPhase: %5.0f mA, RPM: %5.0f\t\t", 
-					omega, tcmd * 1.34, rpm);
+				printf("\rFreq: %5.2f Hz, MaxI: %5.0f mA, RPM: %5.0f, MaxRPM: %5.0f, MinRPM: %5.0f, AvgRPM: %5.0f        \t\t", 
+					omega, mt * 1.34, rpm, maxrpm, minrpm, frpm);
 					
 				fflush(stdout);
 				
@@ -442,6 +464,7 @@ void handleMenu(int argc, char **argv) {
 					case 6: // MOV
 						printf("Set MOV to %d\n", value[key]);
 						setProperty(0, id, MOV, FALSE, value[key]);
+						//mt = value[key];
 						break;
 					case 7: // Torque
 						printf("Set Torque to %d\n", value[key]);
@@ -517,6 +540,11 @@ void handleMenu(int argc, char **argv) {
 				case 5: // IKI
 					printf("Set IKI to %d\n", v);
 					setProperty(0, id, IKI, FALSE, v);
+					break;
+				case 6: // IKI
+					printf("Set MT to %d\n", v);
+					setProperty(0, id, MT, FALSE, v);
+					mt = v;
 					break;
 				case 7: // Torque
 					printf("Set T to %d\n", v);
@@ -600,7 +628,8 @@ void handleMenu(int argc, char **argv) {
 				
 				// Enable sinusoid
 				setProperty(0, id, TSTOP, FALSE, 0);
-				setProperty(0, id, MODE, FALSE, 3);
+				//setProperty(0, id, MODE, FALSE, 3);
+				setProperty(0, id, MODE, FALSE, 2);
 				cycle = 1;
 				printf("Sinusoid Enabled.\n", omega);
 				printf("Bias = %ld, Gain = %ld, Omega = %0.4lf, Shift = %0.4lf\n",
@@ -627,6 +656,8 @@ void handleMenu(int argc, char **argv) {
 					//printf("%ld + %ld * sin(6.28 * %.4f * %.4f + %.4f) = %.0f (%ld)\n",
 					//	bias, gain, omega, t, shift, bias + gain * sin(6.28 * omega * t + shift), lval);
 					
+					maxrpm=-1000;
+					minrpm=1000;
 				}
 			}
 			
@@ -646,6 +677,8 @@ void handleMenu(int argc, char **argv) {
 				else
 					shift = 3.14 + asin(-1.0 * (lval - bias) / gain) - 6.28 * omega * t;
 
+				maxrpm=-1000;
+				minrpm=1000;
 				//printf("%ld + %ld * sin(6.28 * %.4f * %.4f + %.4f) = %.0f (%ld)\n",
 				//	bias, gain, omega, t, shift, bias + gain * sin(6.28 * omega * t + shift), lval);
 				
