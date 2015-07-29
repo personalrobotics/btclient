@@ -124,6 +124,30 @@ int main( int argc, char **argv ) {
 		usleep(10000);
 }
 
+/*
+ * R = 109;
+	L = 110;
+	J = 111;
+	KT = 112;
+	ICONT = 113;
+	IPEAK = 114;
+	IPKMS = 115;
+	IBW = 116;
+	VBW = 117;
+	PBW = 118;
+	VKP = 119;
+	VKI = 120;
+	IKPS = 121;
+	IKIS = 122;
+	VKPS = 123;
+	VKIS = 124;
+	PKPS = 125;
+	PKIS = 126;
+      PROP_END = i++;
+
+	PKP = KP = 79
+	PKI = KI = 81;
+	* */
 
 void handleMenu(int argc, char **argv) {
 	long        status[MAX_NODES];
@@ -137,11 +161,11 @@ void handleMenu(int argc, char **argv) {
 	int 		a, key, v;
 	FILE		*fp;
 	int			dev;
-					/*    GRPA, GRPB, GRPC,   MT,   MV,  MOV, HOLD,TSTOP,   KP,   KD, KI, ACCEL, IPNM, POLES,  IKP, IKI, IKCOR */
-	int			prop[] = {  26,   27,   28,   43,   45,   47,   77,   78,   79,   80, 81,    82,   86,    90,   91,  92,    93,  -1};
-	int			def1[] = {   0,    1,    4, 1000,    4,   37,    0,    0,  500,25000,  0,     1, 1456,    16, 1000, 500,   300}; /* MF95 */
-	int			def2[] = {   0,    1,    4, 1000,    8,   37,    0,    0,  500,25000,  0,     1,  500,    12, 1000, 500,   500}; /* 4DOF */
-	int			def3[] = {   0,    1,    4, 1000,   40,   37,    0,    0,  200,16000,  0,     1,  500,     8, 1000, 500,   500}; /* RSF-5B */
+					/*    VBUS,GRPA, GRPB, GRPC,   MT,   MV,  MOV, HOLD,TSTOP,   KP,   KD, KI, ACCEL, IPNM, POLES,  IKP, IKI, IKCOR */
+	int			prop[] = {  21, 26,   27,   28,   43,   45,   47,   77,   78,   79,   80, 81,    82,   86,    90,   91,  92,    93,  109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, -1};
+	int			def1[] = {   48, 0,    1,    4, 1000,    4,   37,    0,    0,  500,25000,  0,     1, 1456,    16, 1000, 500,   300}; /* MF95 */
+	int			def2[] = {   48, 0,    1,    4, 1000,    8,   37,    0,    0,  500,25000,  0,     1,  500,    12, 1000, 500,   500}; /* 4DOF */
+	int			def3[] = {   24, 0,    1,    4, 1266,   2681,   37,    0,    0,32169,0 ,19394,   1,  500,     8,18368,32495,   500, 3359, 1106, 23924, 1502, 195, 435, 100, 500, 50, 5, 19094, 28780, -6, -4, 6, 0, 1, -7}; /* RSF-5B */
 	int			*def;
 	int			newID, role;
 	long		sum;
@@ -495,7 +519,7 @@ void handleMenu(int argc, char **argv) {
 					printf("Velocity\n");
 					setProperty(0, id, TSTOP, FALSE, 0); usleep(1e4);
 					setProperty(0, id, V, FALSE, 0); usleep(1e4);
-					setProperty(0, id, MV, FALSE, 100); usleep(1e4);
+					//setProperty(0, id, MV, FALSE, 100); usleep(1e4);
 					setProperty(0, id, MODE, FALSE, 4); usleep(1e4);
 				}
 			}
