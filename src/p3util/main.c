@@ -161,11 +161,11 @@ void handleMenu(int argc, char **argv) {
 	int 		a, key, v;
 	FILE		*fp;
 	int			dev;
-					/*    VBUS,GRPA, GRPB, GRPC,   MT,   MV,  MOV, HOLD,TSTOP,   KP,   KD, KI, ACCEL, IPNM, POLES,  IKP, IKI, IKCOR */
-	int			prop[] = {  21, 26,   27,   28,   43,   45,   47,   77,   78,   79,   80, 81,    82,   86,    90,   91,  92,    93,  109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, -1};
-	int			def1[] = {   48, 0,    1,    4, 1000,    4,   37,    0,    0,  500,25000,  0,     1, 1456,    16, 1000, 500,   300}; /* MF95 */
-	int			def2[] = {   48, 0,    1,    4, 1000,    8,   37,    0,    0,  500,25000,  0,     1,  500,    12, 1000, 500,   500}; /* 4DOF */
-	int			def3[] = {   24, 0,    1,    4, 1266,   2681,   37,    0,    0,32169,0 ,19394,   1,  500,     8,18368,32495,   500, 3359, 1106, 23924, 1502, 195, 435, 100, 500, 50, 5, 19094, 28780, -6, -4, 6, 0, 1, -7}; /* RSF-5B */
+					/*     VBUS, GRPA, GRPB, GRPC,   MT,   MV,  MOV, HOLD, TSTOP,   KP,   KD,   KI,ACCEL, IPNM,POLES,  IKP,  IKI,IKCOR,    R,    L,    J,   KT,ICONT,IPEAK,IKPMS,  IBW,  VBW,  PBW,  VKP,  VKI, IKPS, IKIS, VKPS, VKIS, PKPS, PKIS */
+	int			prop[] = {   21,   26,   27,   28,   43,   45,   47,   77,    78,   79,   80,   81,   82,   86,   90,   91,   92,   93,  109,  110,  111,  112,  113,  114,  115,  116,  117,  118,  119,  120,  121,  122,  123,  124,  125,  126, -1};
+	int			def1[] = {   48,    0,    1,    4, 1000,    4,   51,    0,     0,  500,25000,    0,    1, 1456,   16, 1000,  500,  300,}; /* MF95 */
+	int			def2[] = {   48,    0,    1,    4, 1000,    8,   51,    0,     0,  500,25000,    0,    1,  500,   12, 1000,  500,  500,}; /* 4DOF */
+	int			def3[] = {   24,    0,    1,    4, 1266, 2681,   51,    0,     0,32169,    0,19394,    1,  500,    8,29908,26454,  500, 3359, 1106,23924, 1502,  195,  435,  100,  500,   50,    5,23455,17676,   -7,   -4,    5,    0,    1,   -7}; /* RSF-5B */
 	int			*def;
 	int			newID, role;
 	long		sum;
@@ -375,12 +375,12 @@ void handleMenu(int argc, char **argv) {
 		printf("Initial IKP = %d (%0.4lf)\n", value[4], value[4]/32768.0);
 		getProperty(0, id, IKI, &lval); value[5] = lval;
 		printf("Initial IKI = %d (%0.4lf)\n", value[5], value[5]/32768.0);
-		getProperty(0, id, MT, &lval); value[6] = lval;
+		getProperty(0, id, MOV, &lval); value[6] = lval;
 		printf("Initial MT = %d (%0.4lf)\n", value[6], value[6]/32768.0);
 		getProperty(0, id, T, &lval); value[7] = lval;
 		
 		printf("Opening NanoKontrol2 device...\n");
-		if((dev = open("/dev/snd/midiC1D0", O_NONBLOCK)) == NULL){
+		if((dev = open("/dev/snd/midiC0D0", O_NONBLOCK)) == NULL){
 			printf("Unable to open NanoKontrol2 device!\n");
 			return(1);
 		}
