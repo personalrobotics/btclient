@@ -1201,10 +1201,8 @@ void setMofst(int newID)
    role &= 0x000F; // 0 = WAM, 5 = BHand
 
    // Get a valid IOFST
-   //#define IOFST_MIN (1800)
-   //#define IOFST_MAX (2230)
-   #define IOFST_MIN (1638)
-   #define IOFST_MAX (2457)
+   #define IOFST_MIN (1800)
+   #define IOFST_MAX (52230)
    #define IOFST_STDEV (15.0)
 
    // Collect stats
@@ -1261,8 +1259,29 @@ void setMofst(int newID)
       //printf("\nPress enter when the index pulse is found: ");
       //mygetch();
       //mygetch();
-      printf("\nPlease wait (10 sec)...\n");
-      usleep(10000000); // Sleep for 10 sec
+      printf("\nPlease wait...\n");
+      
+      // Collect stats
+   sumX = sumX2 = 0;
+   max = -2E9;
+   min = +2E9;
+   for(i = 0; i < samples; i++){
+      //setPropertySlow(0,newID,FIND,0,IOFST);
+      getProperty(0,newID,IMOTOR,&dat);
+      if(dat > max) max = dat;
+      if(dat < min) min = dat;
+      sumX += dat;
+      sumX2 += dat * dat;
+      usleep(1e6/samples);
+   }
+   mean = 1.0 * sumX / samples;
+   stdev = sqrt((1.0 * samples * sumX2 - sumX * sumX) / (samples * samples - samples));
+   printf("\nMIN iSense = %ld", min);
+   printf("\nMAX iSense = %ld", max);
+   printf("\nMEAN iSense = %.2f", mean);
+   printf("\nSTDEV iSense = %.2f", stdev);
+   
+      //usleep(10000000); // Sleep for 10 sec
       if(vers <= 39){
          setPropertySlow(0,newID,ADDR,0,32970);
          getProperty(0,newID,VALUE,&dat);
