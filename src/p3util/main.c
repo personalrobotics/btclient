@@ -206,6 +206,15 @@ void handleMenu(int argc, char **argv) {
 			}
 			++i;
 		}
+		printf("Setting property 70 to %d...", id);
+		setProperty(0, id, 70, FALSE, id); usleep(1e4);
+		setProperty(0, id, SAVE, FALSE, 70); usleep(1e4);
+		getProperty(0, id, 70, &lval);
+		if(lval == id){
+			printf("ok.\n");
+		}else{
+			printf("!!! FAIL !!!\n");
+		}
 		printf("If POLES was changed, you must cycle power now...\n");
 		break;
 	case 'S': // Set Serial Number
