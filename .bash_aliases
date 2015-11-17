@@ -4,4 +4,4 @@ alias rightConfig='cp ~/libbarrett/proficio_sandbox/configurations/wam3.conf.rig
 alias checkSetup='head -n 1 /etc/barrett/wam3.conf; head -n 1 /etc/barrett/calibration.conf; head -n 1 /etc/barrett/calibration_data/wam3/zerocal.conf'
 alias btutil='~/btclient/src/btutil/btutil'
 alias p3util='~/btclient/src/p3util/p3util'
-alias reset_can='sudo sh ~/btclient/reset_can.sh'
+alias resetcan='sudo sh ~/btclient/reset_can.sh'
