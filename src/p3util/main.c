@@ -123,6 +123,23 @@ int main( int argc, char **argv ) {
 		usleep(10000);
 }
 
+void setAProperty(int id, int p, long v, char n[]) {
+        long lval;
+	printf("Setting property %d (", p);
+ 	printf(n);
+	printf(") to %d...", v);
+	setProperty(0, id, p, FALSE, v); usleep(1e4);
+	setProperty(0, id, SAVE, FALSE, p); usleep(1e4);
+	getProperty(0, id, p, &lval);
+	if(lval == v){
+		printf("ok.\n");
+		
+	}else{
+		printf("!!! FAIL !!!\n");
+		//exit(1);
+	}
+}
+
 
 void handleMenu(int argc, char **argv) {
 	long        status[MAX_NODES];
@@ -135,11 +152,27 @@ void handleMenu(int argc, char **argv) {
 	long		lval;
 	int 		a, key, v;
 	FILE		*fp;
-					/*GRPA, GRPB, GRPC,   MT,  MOV, HOLD,TSTOP,   KP,   KD, KI, IPNM, POLES,  IKP, IKI, IKCOR */
-	int			prop[] = {  26,   27,   28,   43,   47,   77,   78,   79,   80, 81,   86,    90,   91,  92,    93,  -1};
-	int			def1[] = {   0,    1,    4, 4500,   37,    0,    0,  500,25000,  0, 1810,    16, 1000, 500,   3000}; /* MF95 */
-	int			def2[] = {   0,    1,    4, 1000,   37,    0,    0,  500,25000,  0,  500,    12, 1000, 500,   500}; /* 4DOF */
-	int			def3[] = {   0,    1,    4, 1000,   37,    0,    0,  200,16000,  0,  500,     8, 1000, 500,   500}; /* RSF-5B */
+					/*GRPA, GRPB, GRPC,   MT,  MOV, HOLD, TSTOP,   KP,    KD, KI, IPNM, POLES,  IKP, IKI,  IKCOR */
+	int			prop[] = {  26,   27,   28,   43,   47,   77,    78,   79,    80, 81,   86,    90,   91,  92,     93,  -1};
+	int			def1[] = {   0,    1,    4, 4500,   37,    0,     0,  500, 25000,  0, 1810,    16, 1000, 500,   3000 }; /* MF95 */
+	int			def2[] = {   0,    1,    4, 1000,   37,    0,     0,  500, 25000,  0,  500,    12, 1000, 500,    500 }; /* 4DOF */
+	int			def3[] = {   0,    1,    4, 1000,   37,    0,     0,  200, 16000,  0,  500,     8, 1000, 500,    500 }; /* RSF-5B */
+        const char	*propName[15];
+	propName[0] = "GRPA";
+	propName[1] = "GRPB";
+	propName[2] = "GRPC";
+	propName[3] = "MT";
+	propName[4] = "MOV";
+	propName[5] = "HOLD";
+	propName[6] = "TSTOP";
+	propName[7] = "KP";
+	propName[8] = "KD";
+	propName[9] = "KI";
+	propName[10] = "IPNM";
+	propName[11] = "POLES";
+	propName[12] = "IKP";
+	propName[13] = "IKI";
+	propName[14] = "IKCOR";
 	int			*def;
 	int			newID, role;
 	long		sum;
@@ -193,28 +226,10 @@ void handleMenu(int argc, char **argv) {
 		
 		i = 0;
 		while(prop[i] != -1){
-			printf("Setting property %d to %d...", prop[i], def[i]);
-			setProperty(0, id, prop[i], FALSE, def[i]); usleep(1e4);
-			setProperty(0, id, SAVE, FALSE, prop[i]); usleep(1e4);
-			getProperty(0, id, prop[i], &lval);
-			if(lval == def[i]){
-				printf("ok.\n");
-				
-			}else{
-				printf("!!! FAIL !!!\n");
-				//exit(1);
-			}
+			setAProperty(id, prop[i], def[i], propName[i]);
 			++i;
 		}
-		printf("Setting property 70 to %d...", id);
-		setProperty(0, id, 70, FALSE, id); usleep(1e4);
-		setProperty(0, id, SAVE, FALSE, 70); usleep(1e4);
-		getProperty(0, id, 70, &lval);
-		if(lval == id){
-			printf("ok.\n");
-		}else{
-			printf("!!! FAIL !!!\n");
-		}
+		setAProperty(id, 70, id, "PIDX");
 		printf("If POLES was changed, you must cycle power now...\n");
 		break;
 	case 'S': // Set Serial Number
