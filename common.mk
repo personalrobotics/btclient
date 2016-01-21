@@ -53,6 +53,9 @@ XENO_VERSION      ?= $(shell $(XENO_CONFIG) --version)
 ifeq ($(XENO_VERSION),2.6.4)
 CFLAGS += -Dxeno_conform
 endif
+ifeq ($(XENO_VERSION),2.6.1)
+CFLAGS += -Dxeno_conform
+endif
 
 ### User space application compile options #########################
 USERAPP_LIBS      ?= -lnative 
