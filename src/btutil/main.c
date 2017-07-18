@@ -457,8 +457,11 @@ void ProcessWatch(void){
    for(i = 0; i < MAX_WATCH; i++){
       if(watch[i].puckID){
          getProperty(0, watch[i].puckID, watch[i].prop, &value);
+         test_and_log(
+			btrt_mutex_lock(&(disp_mutex)),"Display mutex failed");
          mvprintw(watchY+i, watchX + 2, "ID=%d   PROP=%d   VAL=%ld\t\t",
             watch[i].puckID, watch[i].prop, value);
+         btrt_mutex_unlock( &(disp_mutex) );
       }
    }
 }
