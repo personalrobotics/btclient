@@ -1121,13 +1121,15 @@ int parseMessage(
    switch (dataHeader)
    {
    case 3:  /* Data is a packed 22-bit position, SET */
-      *value = 0x00000000;
+      *value = 0L;
       *value |= ( (long)messageData[0] << 16) & 0x003F0000;
       *value |= ( (long)messageData[1] << 8 ) & 0x0000FF00;
       *value |= ( (long)messageData[2] ) & 0x000000FF;
 
       if (*value & 0x00200000) /* If negative */
-         *value |= 0xFFC00000; /* Sign-extend */
+         *value |= -0x00400000; // Let the arch determine the mask
+         //*value = -(~*value + 1); // Invert, add one, negate (handles 32 and 64-bit arch)
+         //*value |= 0xFFC00000; /* Sign-extend */
 
       if((id & 0x041F) == 0x0403)
         *property = P;
@@ -1141,7 +1143,9 @@ int parseMessage(
         jointPosition[*node] |= ( (long)messageData[5] ) & 0x000000FF;
 
         if (jointPosition[*node] & 0x00200000) /* If negative */
-           jointPosition[*node] |= 0xFFC00000; /* Sign-extend */
+           jointPosition[*node] |= -0x00400000;
+           //jointPosition[*node] = -(~jointPosition[*node] + 1); // Invert, add one, negate
+           //jointPosition[*node] |= 0xFFC00000; /* Sign-extend */
       }
 
       //syslog(LOG_ERR,"Received packed set property: %d from node: %d value:%d",*property,*node,*value);
