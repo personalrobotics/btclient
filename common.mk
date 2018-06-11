@@ -50,14 +50,20 @@ XENO_DIR          ?= /usr/xenomai
 XENO_CONFIG       ?= $(XENO_DIR)/bin/xeno-config
 XENO_LIB_DIR      ?= $(shell $(XENO_CONFIG) --library-dir) -Wl,-rpath $(shell $(XENO_CONFIG) --library-dir)
 XENO_VERSION      ?= $(shell $(XENO_CONFIG) --version)
+ifeq ($(XENO_VERSION),2.6.4)
+CFLAGS += -Dxeno_conform
+endif
 ifeq ($(XENO_VERSION),2.6.1)
 CFLAGS += -Dxeno_conform
 endif
 
 ### User space application compile options #########################
 USERAPP_LIBS      ?= -lnative 
-USERAPP_LDFLAGS   ?= $(shell $(XENO_CONFIG) --$(SKIN)-ldflags) -L$(XENO_LIB_DIR)
-USERAPP_CFLAGS    ?= $(shell $(XENO_CONFIG) --$(SKIN)-cflags)
+USERAPP_LDFLAGS   ?= $(shell $(XENO_CONFIG) --skin=native --ldflags) -L$(XENO_LIB_DIR)
+USERAPP_CFLAGS    ?= $(shell $(XENO_CONFIG) --skin=native --cflags)
+
+#USERAPP_LDFLAGS   ?= $(shell $(XENO_CONFIG) --$(SKIN)-ldflags) -L$(XENO_LIB_DIR)
+#USERAPP_CFLAGS    ?= $(shell $(XENO_CONFIG) --$(SKIN)-cflags)
 
 CFLAGS += ${USERAPP_CFLAGS}
 LDFLAGS += ${USERAPP_LDFLAGS} ${USERAPP_LIBS}

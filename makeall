@@ -20,6 +20,10 @@ cd ../btutil
 make clean
 make
 
+cd ../p3util
+make clean
+make
+
 cd ../calibrate
 make clean
 make
