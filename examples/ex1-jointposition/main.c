@@ -61,6 +61,9 @@
 /* Allow us to catch the Ctrl-C signal and exit gracefully */
 #include <signal.h>
 
+/* usleep */
+#include <unistd.h>
+
 /* Provides mlockall(), prevent process memory from being swapped out to disk */
 #include <sys/mman.h>
 

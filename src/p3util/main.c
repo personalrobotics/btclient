@@ -45,6 +45,8 @@
  *==============================*/
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <ctype.h>
 #include <signal.h>
 #include <math.h>
 #include <syslog.h>
@@ -315,7 +317,7 @@ void handleMenu(int argc, char **argv) {
 		id = atol(argv[2]);
 		printf("Finding offsets of Puck ID %d\n", id);
 		getProperty(0, id, IOFST, &lval);
-		printf("Old IOFST = %d\n", lval);
+		printf("Old IOFST = %ld\n", lval);
 		sum = 0;
 		for(i = 0; i < 32; i++){
 			//setProperty(0, id, FIND, FALSE, IOFST);
@@ -380,9 +382,9 @@ void handleMenu(int argc, char **argv) {
 		getProperty(0, id, T, &lval); value[7] = lval;
 		
 		printf("Opening NanoKontrol2 device...\n");
-		if((dev = open("/dev/snd/midiC0D0", O_NONBLOCK)) == NULL){
+		if((dev = open("/dev/snd/midiC0D0", O_NONBLOCK)) == -1){
 			printf("Unable to open NanoKontrol2 device!\n");
-			return(1);
+			return;
 		}
 	
 		printf("Ready to tune!\n");
@@ -655,7 +657,7 @@ void handleMenu(int argc, char **argv) {
 				//setProperty(0, id, MODE, FALSE, 3);
 				setProperty(0, id, MODE, FALSE, 2);
 				cycle = 1;
-				printf("Sinusoid Enabled.\n", omega);
+				printf("Sinusoid Enabled.\n");
 				printf("Bias = %ld, Gain = %ld, Omega = %0.4lf, Shift = %0.4lf\n",
 					bias, gain, omega, shift);
 			}
@@ -744,7 +746,7 @@ void handleMenu(int argc, char **argv) {
 				getProperty(0, id, P, &lval); p2 = lval;
 				printf("Set position_B to %ld\n", p2);
 				
-				printf("Adjusting positions by 5%\n");
+				printf("Adjusting positions by 5%%\n");
 				gain = (p1 - p2) / 20;
 				p1 -= gain;
 				p2 += gain;

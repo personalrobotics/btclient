@@ -45,6 +45,7 @@
 #include <stdio.h>    /* printf(), getchar(), setvbuf() */
 #include <unistd.h>   /* usleep() */
 #include <sys/mman.h> /* mlockall() */
+#include <stdlib.h> /* exit */
 
 #include "btwam.h"    /* All barrett functions */
 

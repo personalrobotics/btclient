@@ -55,6 +55,7 @@
 #include <unistd.h>
 #include <sys/time.h>
 #include <pthread.h>
+#include <stdlib.h>
 
 /*==============================*
  * INCLUDES - Project Files     *
@@ -456,7 +457,7 @@ int EnumerateSystem()
       status_cnt = 0;
       for (cnt = 0;cnt < MAX_NODES;cnt++) {
          if (status[cnt] != -1)
-            syslog(LOG_ERR, "Status %d = %d", cnt, status[cnt]);
+            syslog(LOG_ERR, "Status %d = %ld", cnt, status[cnt]);
          if ((status[cnt] != STATUS_OFFLINE) && (cnt != SAFETY_MODULE))
             status_cnt++;
       }

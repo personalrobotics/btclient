@@ -481,7 +481,7 @@ int DecodeDL(char *infile, char *outfile, int header)
       if (header) {
          if (array_len > 1) {
             for (ridx = 0; ridx < array_len; ridx++) {
-               fprintf(outf,"%s[%d]",db.data[cnt].name,ridx);
+               fprintf(outf,"%s[%ld]",db.data[cnt].name,ridx);
                if ((ridx < array_len - 1) || (cnt < fieldcnt - 1))
                   fprintf(outf,",");
             }

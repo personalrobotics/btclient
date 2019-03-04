@@ -47,6 +47,7 @@
 #include <unistd.h>   /* usleep() */
 #include <sys/mman.h> /* mlockall() */
 #include <syslog.h>
+#include <stdlib.h>
 
 /* Woo socket stuff! */
 #include <string.h>
@@ -333,7 +334,7 @@ int main()
    while (1)
    {
       struct sockaddr_in their_addr;
-      size_t addr_len;
+      socklen_t addr_len;
       int numbytes;
       char buffer[10]; /* xxxx|yyyy0 */
       

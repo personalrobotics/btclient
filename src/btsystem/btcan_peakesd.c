@@ -62,9 +62,9 @@
 #include <signal.h>
 
 #ifdef XENOMAI
-#include <native/task.h>
-#include <native/timer.h>
-#include <native/mutex.h>
+#include <alchemy/task.h>
+#include <alchemy/timer.h>
+#include <alchemy/mutex.h>
 #else
 #include <inttypes.h>
 #endif
@@ -81,7 +81,8 @@
 #endif
 
 #ifdef SOCKET_CAN
-#include <rtdm/rtcan.h>
+#include <trank/rtdm/rtcan.h>
+#include <trank/rtdm/rtdm.h>
 
 typedef int HANDLE;
 typedef long DWORD;
@@ -275,7 +276,6 @@ int compile(int property, long longVal, unsigned char *data, int *dataLen, int i
 int parseMessage(int id, int len, unsigned char *messageData, int *node, int *property, long *value);
 int canReadMsg(int bus, int *id, int *len, unsigned char *data, int blocking);
 int canSendMsg(int bus, int id, char len, unsigned char *data, int blocking);
-int canClearMsg(int bus);
 
 /*==============================*
  * Functions                    *

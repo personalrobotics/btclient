@@ -45,6 +45,7 @@
 #include <unistd.h>   /* usleep() */
 #include <sys/mman.h> /* mlockall() */
 #include <signal.h>   /* For the Control+C exit handler */
+#include <stdlib.h>   /* malloc() and free() */
 
 #include <curses.h>   /* ncurses */
 #include <syslog.h>   /* syslog */
@@ -101,6 +102,8 @@ enum btkey btkey_get()
 
 /* ------------------------------------------------------------------------ *
  * Program Entry Point -- Choose Calibration Routine                        */
+int do_mode_zero();
+int do_mode_mu();
 int main(int argc, char **argv)
 {
    int err;
@@ -125,7 +128,7 @@ int main(int argc, char **argv)
                      || !strncasecmp(argv[1], "-h",2)
                      || !strncasecmp(argv[1],"--h",3) ))
    {
-      printf("Usage: %s [options]\n");
+      printf("Usage: %s [options]\n", argv[0]);
       printf("\n");
       printf("Options:\n");
       printf("\n");

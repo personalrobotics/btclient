@@ -70,6 +70,8 @@ See #btwam_struct
 #include <fcntl.h>
 #include <signal.h>
 #include <sys/stat.h>
+#include <execinfo.h>
+#include <unistd.h>
 
 /*==============================*
  * INCLUDES - Project Files     *
@@ -244,7 +246,7 @@ wam_struct* OpenWAM(char *fn, int bus)
    int            cnt, ret, err;
    btreal         theta, d, a, alpha, mass;
    wam_struct     *wam;
-   char           key[256];
+   char           key[512];
    long           reply;
    int            link;
    int            actcnt = 0;
@@ -801,7 +803,7 @@ void WAMControlThread(void *data)
    skiptarg = 1.5 * dt_targ;
    dt = dt_targ;
    wam->skipmax = 0.0;
-   syslog(LOG_ERR,"WAMControl period Sec:%f, ns: %d",thisperiod, rtime_period);
+   syslog(LOG_ERR,"WAMControl period Sec:%f, ns: %lld",thisperiod, rtime_period);
 
    /*Set up as hard real time*/
    btrt_set_mode_hard();
@@ -1165,19 +1167,19 @@ void WAMControlThread(void *data)
       */
       syslog(LOG_ERR, "Get Positions)Max: %ld", max1);
       syslog(LOG_ERR, "              Min: %ld", min1);
-      syslog(LOG_ERR, "             Mean: %ld", mean1);
+      syslog(LOG_ERR, "             Mean: %lld", mean1);
       /*syslog(LOG_ERR, "            Stdev: %.4f", stdev1);*/
       syslog(LOG_ERR, "Set Torques)  Max: %ld", max2);
       syslog(LOG_ERR, "              Min: %ld", min2);
-      syslog(LOG_ERR, "             Mean: %ld", mean2);
+      syslog(LOG_ERR, "             Mean: %lld", mean2);
       /*syslog(LOG_ERR, "            Stdev: %.4f", stdev2);*/
       syslog(LOG_ERR, "Wait time)    Max: %ld", max3);
       syslog(LOG_ERR, "              Min: %ld", min3);
-      syslog(LOG_ERR, "             Mean: %ld", mean3);
+      syslog(LOG_ERR, "             Mean: %lld", mean3);
       /*syslog(LOG_ERR, "            Stdev: %.4f", stdev3);*/
       syslog(LOG_ERR, "Calc time)    Max: %ld", max4);
       syslog(LOG_ERR, "              Min: %ld", min4);
-      syslog(LOG_ERR, "             Mean: %ld", mean4);
+      syslog(LOG_ERR, "             Mean: %lld", mean4);
       /*syslog(LOG_ERR, "            Stdev: %.4f", stdev4);*/
       /*syslog(LOG_ERR, "Skips %d", counter);*/
    );

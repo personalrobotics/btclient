@@ -55,6 +55,7 @@
 #include <syslog.h>
 #include <signal.h>
 #include <sys/mman.h>
+#include <unistd.h>
 /* The ncurses library allows us to write text anywhere on the screen */
 #include <curses.h>
 

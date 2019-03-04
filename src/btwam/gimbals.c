@@ -51,6 +51,7 @@
 #include "stdio.h"
 #include "syslog.h"
 #include "btwam.h"
+#include <unistd.h>
 
 #define TWOPI 6.283185
 int gimbalsInit = 0;

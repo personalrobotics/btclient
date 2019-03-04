@@ -55,6 +55,7 @@
 #include <signal.h>
 #include <sys/mman.h>
 #include <curses.h>
+#include <unistd.h>
 
 /*==============================*
  * INCLUDES - Project Files     *

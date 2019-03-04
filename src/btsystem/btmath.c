@@ -935,7 +935,7 @@ vect_n * strto_vn(vect_n *dest,char *src,char *delimiters)
    //while !done, vect.q[cnt] = strtod()
    for (cnt = 0; cnt < num; cnt++) {
       if (cnt > dest->n) {
-         syslog(LOG_ERR,"strto_vn: cnt (%d) > dest->n (%d), num=%d, dest=%x",cnt, dest->n, num, dest);
+         syslog(LOG_ERR,"strto_vn: cnt (%d) > dest->n (%d), num=%d, dest=%p",cnt, dest->n, num, (void*)dest);
          break;
       }
       setval_vn(dest,cnt,strtod(scan,&second));
@@ -1750,7 +1750,7 @@ int test_v3(btreal error)
 
    printf("\nThe following should be <5,4,3,2>");
    const_v3(c1,5.0,4.0,3.0);
-   printf("\n<%g,%g,%g,%g>\n\n",getval_v3(c1,0),getval_v3(c1,1),getval_v3(c1,2));
+   printf("\n<%g,%g,%g>\n\n",getval_v3(c1,0),getval_v3(c1,1),getval_v3(c1,2));
 
    printf("\nSet: <5,4,3,2>");
    set_v3(c2,c1);
@@ -3157,8 +3157,8 @@ btfilter * new_btfilter(int size)
 void syslog_filter(btfilter *filt)
 {
    int i;
-   syslog(LOG_ERR,"Filter Parameters Dump: ptr %x",filt);
-   syslog(LOG_ERR,"Order: %d, size: %d, zeta: %d, idx: %d",filt->order,filt->size,filt->zeta,filt->index);
+   syslog(LOG_ERR,"Filter Parameters Dump: ptr %p", (void*)filt);
+   syslog(LOG_ERR,"Order: %d, size: %d, zeta: %f, idx: %d",filt->order,filt->size,filt->zeta,filt->index);
 
    for (i = 0; i < filt->size; i++) {
       syslog(LOG_ERR,"d[%d]:%f",i,filt->d[i]);

@@ -848,7 +848,7 @@ void read_keys(char *filename)
    FILE *inf;
    int done = 0;
    int cnt = 0;
-   int len = 100;
+   size_t len = 100;
    int ret;
 
    num_commands = 0;
@@ -1098,7 +1098,7 @@ void RenderMAIN_SCREEN()
       
       /* Get rotation matrix in RxRyRz format */
       RtoXYZf_m3( wam[cnt]->HMpos, RxRyRz );
-      mvprintw(line, 0, "C Rotation : %s ", sprint_vn(vect_buf1, RxRyRz));
+      mvprintw(line, 0, "C Rotation : %s ", sprint_vn(vect_buf1, (vect_n*)RxRyRz));
       line+=2;
       
       //mvprintw(line, 0, "TrajState  : %d ", wamData[cnt].active_bts->btt.state);

@@ -21,7 +21,7 @@ CFLAGS += -DPEAK_CAN
 endif
 
 ifeq ($(CAN_HARDWARE),socket)
-LDFLAGS += -lrtdm
+LDFLAGS += -ltrank
 CFLAGS += -DSOCKET_CAN
 endif
 
@@ -42,8 +42,9 @@ endif
 
 ifeq ($(TARGET_OS),xenomai)
 CFLAGS += -DXENOMAI
+CFLAGS += -I/usr/xenomai/include/trank
 CFLAGS += -I/usr/xenomai/include
-LDFLAGS += -L/usr/xenomai/lib -rdynamic -lnative
+LDFLAGS += -L/usr/xenomai/lib -rdynamic -lalchemy
 SKIN = xeno
 ### Xenomai directory, xeno-config and library directory ###########
 XENO_DIR          ?= /usr/xenomai
@@ -58,9 +59,9 @@ CFLAGS += -Dxeno_conform
 endif
 
 ### User space application compile options #########################
-USERAPP_LIBS      ?= -lnative 
-USERAPP_LDFLAGS   ?= $(shell $(XENO_CONFIG) --skin=native --ldflags) -L$(XENO_LIB_DIR)
-USERAPP_CFLAGS    ?= $(shell $(XENO_CONFIG) --skin=native --cflags)
+USERAPP_LIBS      ?= -lalchemy
+USERAPP_LDFLAGS   ?= $(shell $(XENO_CONFIG) --skin=alchemy --ldflags) -L$(XENO_LIB_DIR)
+USERAPP_CFLAGS    ?= $(shell $(XENO_CONFIG) --skin=alchemy --cflags)
 
 #USERAPP_LDFLAGS   ?= $(shell $(XENO_CONFIG) --$(SKIN)-ldflags) -L$(XENO_LIB_DIR)
 #USERAPP_CFLAGS    ?= $(shell $(XENO_CONFIG) --$(SKIN)-cflags)

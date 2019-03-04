@@ -285,7 +285,7 @@ int init_bts(btstatecontrol *sc)
 }
 
 /* Internal function: evaluation portion of case sc.mode */
-inline vect_n* eval_trj_bts(btstatecontrol *sc)
+vect_n* eval_trj_bts(btstatecontrol *sc)
 {
    int state,rampstate;
 #ifdef BT_NULL_PTR_GUARD

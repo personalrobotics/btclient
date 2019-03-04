@@ -99,10 +99,11 @@ where command is:
 #include <unistd.h>
 #include <math.h>
 #include <sys/io.h>
+#include <ctype.h>
 
 #ifdef XENOMAI
-#include <native/task.h>
-#include <native/timer.h>
+#include <alchemy/task.h>
+#include <alchemy/timer.h>
 #else
 #include <rtai_lxrt.h>
 #include <rtai_sem.h>
@@ -338,7 +339,7 @@ void checkHalls(int arg1){
 
    wakePuck(0,arg1);
    setPropertySlow(0, arg1, ADDR, 0, 28900); // GPBDAT
-   printf("\nPlease turn motor %d approx one revolution...\n");
+   printf("\nPlease turn motor %d approx one revolution...\n", arg1);
    vers = -1;
    getProperty(0, arg1, AP, &startPos);
    getProperty(0, arg1, CTS, &cts);
@@ -346,7 +347,7 @@ void checkHalls(int arg1){
       getProperty(0, arg1, VALUE, &reply);
       reply = (reply >> 8) & 0x00000007;
       if(reply != vers){
-         printf("%d, ", vers = reply);
+         printf("%ld, ", vers = reply);
          fflush(stdout);
       }
       getProperty(0, arg1, AP, &reply);
@@ -361,7 +362,9 @@ void hallCheck(void *data){
    checkHalls(id);
 }
 
-cableTension(int motor){
+int mygetch();
+
+void cableTension(int motor){
    int cmd;
    int tens;
    long startPos, endPos;
@@ -416,7 +419,7 @@ cableTension(int motor){
    usleep(1000000);
    getProperty(0,motor,AP,&endPos);
    setPropertySlow(0,motor,cmd,FALSE,0);
-   printf("\nTook up %ld encoder cts of cable", abs(startPos-endPos));
+   printf("\nTook up %d encoder cts of cable", abs(startPos-endPos));
    printf("\nPlease work the tension through the cable, "
           "then press <Enter>");
    mygetch();
@@ -1198,7 +1201,7 @@ void setMofst(int newID)
    getProperty(0,newID,VERS,&vers);
 
    getProperty(0,newID,IOFST,&dat);
-   printf("\nThe old IOFST was: %d",dat);
+   printf("\nThe old IOFST was: %ld",dat);
    
    getProperty(0, newID, ROLE, &role);
    role &= 0x000F; // 0 = WAM, 5 = BHand
@@ -1251,7 +1254,7 @@ void setMofst(int newID)
    if(!err){
       setPropertySlow(0,newID,MODE,0,MODE_TORQUE);
       getProperty(0,newID,MOFST,&dat);
-      printf("\nThe old MOFST was:%d\n",dat);
+      printf("\nThe old MOFST was:%ld\n",dat);
 
       if(vers <= 39){
          setPropertySlow(0,newID,ADDR,0,32971);
@@ -1291,7 +1294,7 @@ void setMofst(int newID)
       }else{
          getProperty(0,newID,MOFST,&dat);
       }
-      printf("\nThe new MOFST is:%d\n",dat);
+      printf("\nThe new MOFST is:%ld\n",dat);
       setPropertySlow(0,newID,MODE,0,MODE_IDLE);
       if(vers <= 39){
          setPropertySlow(0,newID,MOFST,0,dat);
@@ -1303,7 +1306,7 @@ void setMofst(int newID)
    printf("\n");
 }
 
-getParams(int newID)
+void getParams(int newID)
 {
    long reply;
    int cnt;
@@ -1317,7 +1320,7 @@ getParams(int newID)
    getProperty(0,newID,VERS,&reply);
    printf("VERS = %ld\n",reply);
    getProperty(0,newID,ROLE,&reply);
-   printf("ROLE = %ld (ROLE = %d, OPT = 0x%02X)\n",reply, reply & 0x001F, (reply >> 8) & 0x00FF);
+   printf("ROLE = %ld (ROLE = %ld, OPT = 0x%02lX)\n",reply, reply & 0x001F, (reply >> 8) & 0x00FF);
    getProperty(0,newID,JIDX,&reply);
    printf("JIDX = %ld\n",reply);
    getProperty(0,newID,PIDX,&reply);
@@ -1337,11 +1340,11 @@ getParams(int newID)
    getProperty(0,newID,MT,&reply);
    printf("MT = %ld\n",reply);
    getProperty(0,newID,KP,&reply);
-   printf("KP = %ld (0x%04X)\n",reply, reply);
+   printf("KP = %ld (0x%04lX)\n",reply, reply);
    getProperty(0,newID,KD,&reply);
-   printf("KD = %ld (0x%04X)\n",reply, reply);
+   printf("KD = %ld (0x%04lX)\n",reply, reply);
    getProperty(0,newID,KI,&reply);
-   printf("KI = %ld (0x%04X)\n",reply, reply);
+   printf("KI = %ld (0x%04lX)\n",reply, reply);
    getProperty(0,newID,TSTOP,&reply);
    printf("TSTOP = %ld\n",reply);
    getProperty(0,newID,HOLD,&reply);
@@ -1551,9 +1554,9 @@ void cycleHand(void){
 	
 	printf("\n\nBH8-280 Cycle Program\n\n");
 	printf("How many cycles would you like to run?\n\n");
-        scanf("%d",&cyclein);
+        scanf("%ld",&cyclein);
 	printf("\n\nIs this a Vibration Test? Enter 1 for YES. 0 for NO.\n\n");
-        scanf("%d", &vibe);
+        scanf("%ld", &vibe);
 	if (vibe == 1)
 		{
 		printf("\nVibration mode has been selected, spread action has been disabled.\nPlease imobilize the spread.\n\n");
@@ -1589,7 +1592,7 @@ void cycleHand(void){
 
 
 	// printf("vibe is %d", vibe); initial test.
-	printf("\nProgram will now run hand for %d cycles.\n", cyclein);
+	printf("\nProgram will now run hand for %ld cycles.\n", cyclein);
 	
         printf("\nCycle Data - Motor Number: TEMP / THERM / STRAIN GUAGE (press ctrl-c to exit)\n\n");
    
@@ -1782,16 +1785,16 @@ void cycleHand(void){
 	atherm4 = (ttherm4/cyclein);
 
 	//Results
-	printf("\n\nProgram has now completed %d cycles.", cyclein);
+	printf("\n\nProgram has now completed %ld cycles.", cyclein);
 	printf("\n\nRESULTS:\n");
-	printf("	Puck 11: High Temp  %d, Low Temp  %d, Average Temp  %f \n", htemp1, ltemp1, atemp1);
-	printf("	Puck 12: High Temp  %d, Low Temp  %d, Average Temp  %f \n", htemp2, ltemp2, atemp2);
-	printf("	Puck 13: High Temp  %d, Low Temp  %d, Average Temp  %f \n", htemp3, ltemp3, atemp3);
-	printf("	Puck 14: High Temp  %d, Low Temp  %d, Average Temp  %f \n\n", htemp4, ltemp4, atemp4);
-	printf("	Motor 1: High Therm %d, Low Therm %d, Average Therm %f \n", htherm1, ltherm1, atherm1);
-	printf("	Motor 2: High Therm %d, Low Therm %d, Average Therm %f \n", htherm2, ltherm2, atherm2);
-	printf("	Motor 3: High Therm %d, Low Therm %d, Average Therm %f \n", htherm3, ltherm3, atherm3);
-	printf("	Motor 4: High Therm %d, Low Therm %d, Average Therm %f \n", htherm4, ltherm4, atherm4);
+	printf("	Puck 11: High Temp  %ld, Low Temp  %ld, Average Temp  %f \n", htemp1, ltemp1, atemp1);
+	printf("	Puck 12: High Temp  %ld, Low Temp  %ld, Average Temp  %f \n", htemp2, ltemp2, atemp2);
+	printf("	Puck 13: High Temp  %ld, Low Temp  %ld, Average Temp  %f \n", htemp3, ltemp3, atemp3);
+	printf("	Puck 14: High Temp  %ld, Low Temp  %ld, Average Temp  %f \n\n", htemp4, ltemp4, atemp4);
+	printf("	Motor 1: High Therm %ld, Low Therm %ld, Average Therm %f \n", htherm1, ltherm1, atherm1);
+	printf("	Motor 2: High Therm %ld, Low Therm %ld, Average Therm %f \n", htherm2, ltherm2, atherm2);
+	printf("	Motor 3: High Therm %ld, Low Therm %ld, Average Therm %f \n", htherm3, ltherm3, atherm3);
+	printf("	Motor 4: High Therm %ld, Low Therm %ld, Average Therm %f \n", htherm4, ltherm4, atherm4);
 
 
 
@@ -1851,7 +1854,7 @@ void collectPWM(int id){
 	sprintf(fn, "nosense_t%ld_p%ld_i%ld_c%ld.csv", isqref, ikp, iki, ikcor);
    if((fhook=fopen(fn,"w")) == NULL) {
       printf("\nUNABLE TO CREATE OUTPUT FILE.\n");
-      return(1);
+      return;
    }
    
 	wakePuck(0, id);
@@ -1974,7 +1977,7 @@ void debugNoise(int argc, char **argv, char c){
 	}
 	
 	// If the watched finger is not included in the move list, just activate it
-	if(!strchr(argv[2], argv[4])){
+	if(!strchr(argv[2], (int)argv[4][0])){
 		setProperty(0, watchFinger, 78, FALSE, 0);
 		setProperty(0, watchFinger, 8, FALSE, 2);
 	}
@@ -2031,6 +2034,8 @@ void debugNoise(int argc, char **argv, char c){
 	free(error);
 		
 }
+
+int BHandDL(void);
 
 void handleMenu(int argc, char **argv)
 {
@@ -2110,7 +2115,7 @@ void handleMenu(int argc, char **argv)
          if(status[i]>=0) {
             //canClearMsg(0);
             getProperty(0,i,VERS,&vers);
-            printf("\nNode %2d: %15s vers=%2d", i,
+            printf("\nNode %2d: %15s vers=%2ld", i,
                    statusTxt[status[i]+1], vers);
          }
       }
@@ -2354,7 +2359,7 @@ int ReadSerial(char *buf, int bytesToRead)
    return(0);
 }
 
-WriteSerial(char *buf, int bytesToWrite)
+int WriteSerial(char *buf, int bytesToWrite)
 {
    /** Write data to the serial port */
    serialWrite(&p, buf, bytesToWrite);
@@ -2464,7 +2469,7 @@ int BHFirmwareDL(char *fname)
 
    strcpy(stype,"");
    first=1;
-   printf("\nProgress: 0%\n");
+   printf("\nProgress: 0%%\n");
    fflush(stdout);
    //Download the *.S19 file
    if((fhook=fopen(fname,"r")) == NULL)
@@ -2514,7 +2519,7 @@ int BHFirmwareDL(char *fname)
       }
    }
    fclose (fhook);
-   printf("\rProgress: 100%\n");
+   printf("\rProgress: 100%%\n");
 
    return(0);
 }

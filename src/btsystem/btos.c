@@ -49,6 +49,7 @@
 #include <stdlib.h>
 #include "btos.h"
 
+#define xeno_conform
 #ifdef xeno_conform
 #define T_PRIMARY T_CONFORMING
 #endif /*xeno_conform*/
@@ -241,7 +242,7 @@ BTINLINE void * btmalloc(size_t size)
    void* vmem;
    if ((vmem = malloc(size)) == NULL)
    {
-      syslog(LOG_ERR,"btMalloc: memory allocation failed, size %d",size);
+      syslog(LOG_ERR,"btMalloc: memory allocation failed, size %ld",size);
       exit(-1);
    }
    return vmem;
