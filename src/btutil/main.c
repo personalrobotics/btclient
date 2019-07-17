@@ -102,8 +102,8 @@ where command is:
 #include <ctype.h>
 
 #ifdef XENOMAI
-#include <alchemy/task.h>
-#include <alchemy/timer.h>
+#include <native/task.h>
+#include <native/timer.h>
 #else
 #include <rtai_lxrt.h>
 #include <rtai_sem.h>

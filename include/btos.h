@@ -146,9 +146,9 @@ ifdefs:
 */
 
 #ifdef XENOMAI
-#include <alchemy/task.h>
-#include <alchemy/timer.h>
-#include <alchemy/mutex.h>
+#include <native/task.h>
+#include <native/timer.h>
+#include <native/mutex.h>
 
 #else
 #include <rtai_lxrt.h>

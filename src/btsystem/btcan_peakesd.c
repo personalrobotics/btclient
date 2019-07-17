@@ -62,9 +62,9 @@
 #include <signal.h>
 
 #ifdef XENOMAI
-#include <alchemy/task.h>
-#include <alchemy/timer.h>
-#include <alchemy/mutex.h>
+#include <native/task.h>
+#include <native/timer.h>
+#include <native/mutex.h>
 #else
 #include <inttypes.h>
 #endif
@@ -81,8 +81,8 @@
 #endif
 
 #ifdef SOCKET_CAN
-#include <trank/rtdm/rtcan.h>
-#include <trank/rtdm/rtdm.h>
+#include <rtdm/rtcan.h>
+#include <rtdm/rtdm.h>
 
 typedef int HANDLE;
 typedef long DWORD;

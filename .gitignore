@@ -5,6 +5,12 @@
 *ex4
 *ex5
 *ex6
+*ex7
+*ex-mouse-follow
+src/btdiag/btdiag
+src/btutil/btutil
+src/calibrate/calibrate
+src/p3util/p3util
 
 *.map
 *.a
