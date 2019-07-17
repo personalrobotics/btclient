@@ -1641,29 +1641,30 @@ LOAD /usr/lib/gcc/x86_64-linux-gnu/7/../../../x86_64-linux-gnu/crtn.o
 .stab.indexstr
  *(.stab.indexstr)
 
-.comment        0x0000000000000000       0x2a
+.comment        0x0000000000000000       0x55
  *(.comment)
- .comment       0x0000000000000000       0x2a /usr/lib/gcc/x86_64-linux-gnu/7/crtbeginS.o
+ .comment       0x0000000000000000       0x2b /usr/lib/gcc/x86_64-linux-gnu/7/crtbeginS.o
+                                         0x2c (size before relaxing)
+ .comment       0x000000000000002b       0x2c btdiag.o
+ .comment       0x000000000000002b       0x2c ../../lib/libbtwam.a(btwam.o)
+ .comment       0x000000000000002b       0x2c ../../lib/libbtwam.a(gimbals.o)
+ .comment       0x000000000000002b       0x2c ../../lib/libbtsystem.a(btsystem.o)
+ .comment       0x000000000000002b       0x2c ../../lib/libbtsystem.a(btlogger.o)
+ .comment       0x000000000000002b       0x2c ../../lib/libbtsystem.a(btcan_peakesd.o)
+ .comment       0x000000000000002b       0x2c ../../lib/libbtsystem.a(btrobot.o)
+ .comment       0x000000000000002b       0x2c ../../lib/libbtsystem.a(btmath.o)
+ .comment       0x000000000000002b       0x2c ../../lib/libbtsystem.a(btos.o)
+ .comment       0x000000000000002b       0x2c ../../lib/libbtsystem.a(btcontrol.o)
+ .comment       0x000000000000002b       0x2c ../../lib/libbtsystem.a(btserial.o)
+ .comment       0x000000000000002b       0x2c ../../lib/libbtsystem.a(bthaptics.o)
+ .comment       0x000000000000002b       0x2c ../../lib/libbtsystem.a(btstatecontrol.o)
+ .comment       0x000000000000002b       0x2c ../../lib/libbtsystem.a(btgeometry.o)
+ .comment       0x000000000000002b       0x2c ../../lib/libbtsystem.a(btparser.o)
+ .comment       0x000000000000002b       0x2c ../../lib/libbtsystem.a(btseg.o)
+ .comment       0x000000000000002b       0x2c ../../lib/libbtsystem.a(btpath.o)
+ .comment       0x000000000000002b       0x2a /usr/xenomai/lib/xenomai/bootstrap.o
                                          0x2b (size before relaxing)
- .comment       0x000000000000002a       0x2b btdiag.o
- .comment       0x000000000000002a       0x2b ../../lib/libbtwam.a(btwam.o)
- .comment       0x000000000000002a       0x2b ../../lib/libbtwam.a(gimbals.o)
- .comment       0x000000000000002a       0x2b ../../lib/libbtsystem.a(btsystem.o)
- .comment       0x000000000000002a       0x2b ../../lib/libbtsystem.a(btlogger.o)
- .comment       0x000000000000002a       0x2b ../../lib/libbtsystem.a(btcan_peakesd.o)
- .comment       0x000000000000002a       0x2b ../../lib/libbtsystem.a(btrobot.o)
- .comment       0x000000000000002a       0x2b ../../lib/libbtsystem.a(btmath.o)
- .comment       0x000000000000002a       0x2b ../../lib/libbtsystem.a(btos.o)
- .comment       0x000000000000002a       0x2b ../../lib/libbtsystem.a(btcontrol.o)
- .comment       0x000000000000002a       0x2b ../../lib/libbtsystem.a(btserial.o)
- .comment       0x000000000000002a       0x2b ../../lib/libbtsystem.a(bthaptics.o)
- .comment       0x000000000000002a       0x2b ../../lib/libbtsystem.a(btstatecontrol.o)
- .comment       0x000000000000002a       0x2b ../../lib/libbtsystem.a(btgeometry.o)
- .comment       0x000000000000002a       0x2b ../../lib/libbtsystem.a(btparser.o)
- .comment       0x000000000000002a       0x2b ../../lib/libbtsystem.a(btseg.o)
- .comment       0x000000000000002a       0x2b ../../lib/libbtsystem.a(btpath.o)
- .comment       0x000000000000002a       0x2b /usr/xenomai/lib/xenomai/bootstrap.o
- .comment       0x000000000000002a       0x2b /usr/lib/gcc/x86_64-linux-gnu/7/crtendS.o
+ .comment       0x0000000000000055       0x2c /usr/lib/gcc/x86_64-linux-gnu/7/crtendS.o
 
 .debug
  *(.debug)

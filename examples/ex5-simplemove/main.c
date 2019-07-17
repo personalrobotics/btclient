@@ -68,6 +68,7 @@ void can_thd_function(void *thd)
    }
     
    /* Initialize and get a handle to the robot on the first bus */
+   printf("\nCall OpenWAM");
    if((wam = OpenWAM("../../wam.conf", 0)) == NULL){
       printf("  !! OpenWAM failed");
       exit(1);
@@ -76,6 +77,7 @@ void can_thd_function(void *thd)
    /* setSafetyLimits(bus, joint rad/s, tip m/s, elbow m/s);
     * For now, the joint and tip velocities are ignored and
     * the elbow velocity provided is used for all three limits. */
+   printf("\nSetSafetyLimits");
    setSafetyLimits(0, 1.5, 1.5, 1.5);  // Limit to 1.5 m/s
 
    /* Set the puck torque safety limits (TL1 = Warning, TL2 = Critical).
@@ -83,6 +85,7 @@ void can_thd_function(void *thd)
     * Note: btsystem.c bounds the outbound torque to 8191, so entering a
     * value of 9000 for TL2 would tell the safety system to never register a 
     * critical fault. */
+   printf("\nSetProperty");
    setProperty(0, SAFETY_MODULE, TL2, FALSE, 4700);
    setProperty(0, SAFETY_MODULE, TL1, FALSE, 1800);
    
